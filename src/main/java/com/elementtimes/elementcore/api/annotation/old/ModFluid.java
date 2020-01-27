@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.api.annotation;
+package com.elementtimes.elementcore.api.annotation.old;
 
 import com.elementtimes.elementcore.api.annotation.enums.FluidBlockType;
 
@@ -46,11 +46,6 @@ public @interface ModFluid {
      * @return 流体颜色 ARGB
      */
     int color() default 0xFFFFFFFF;
-
-    /**
-     * @return 燃烧时间，包括桶和瓶
-     */
-    int burningTime() default -1;
 
     /**
      * 设置流体密度，同时自动设置gaseous属性

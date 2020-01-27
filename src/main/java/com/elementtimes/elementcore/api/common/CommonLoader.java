@@ -1,12 +1,13 @@
 package com.elementtimes.elementcore.api.common;
 
-import com.elementtimes.elementcore.api.annotation.*;
 import com.elementtimes.elementcore.api.annotation.enums.FluidBlockType;
 import com.elementtimes.elementcore.api.annotation.enums.GenType;
+import com.elementtimes.elementcore.api.annotation.old.*;
+import com.elementtimes.elementcore.api.annotation.tools.ModBurnTime;
+import com.elementtimes.elementcore.api.annotation.tools.ModTabEditor;
 import com.elementtimes.elementcore.api.template.SimpleOreGenerator;
 import com.elementtimes.elementcore.other.CapabilityObject;
 import com.elementtimes.elementcore.other.ModTooltip;
-import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.creativetab.CreativeTabs;
@@ -30,6 +31,7 @@ import net.minecraftforge.fml.common.discovery.asm.ModAnnotation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import net.minecraftforge.oredict.ShapelessOreRecipe;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -49,7 +51,6 @@ public class CommonLoader {
         elements.container.warn("common load start");
         // capability
         loadCapability(elements);
-
         // creativeTabs
         loadTab(elements);
         // block
@@ -59,7 +60,6 @@ public class CommonLoader {
         loadBlockTileEntity(elements);
         loadBlockState(elements);
         loadBlockWorldGenerator(elements);
-        loadBlockBurningTime(elements);
         // item
         loadItem(elements);
         loadItemRetain(elements);
@@ -81,6 +81,9 @@ public class CommonLoader {
         loadStaticFunction(elements);
         // potion
         loadPotion(elements);
+        // common
+        loadBurnTime(elements);
+        loadTabEditor(elements);
         elements.container.warn("common load finished");
     }
 
@@ -207,7 +210,6 @@ public class CommonLoader {
                 LoaderHelper.getBlock(elements, data.getClassName(), data.getObjectName()).ifPresent(block -> {
                     Map<String, Object> teInfo = data.getAnnotationInfo();
                     String name = (String) teInfo.getOrDefault("name", Objects.requireNonNull(block.getRegistryName()).getResourcePath());
-                    //noinspection unchecked
                     LoaderHelper.getOrLoadClass(elements, (String) teInfo.get("clazz")).ifPresent(clazz ->
                             elements.blockTileEntities.put(block, ImmutablePair.of(name, clazz)));
                 });
@@ -275,22 +277,6 @@ public class CommonLoader {
             }
         }
         elements.container.warn("loadWorldGenerator: {}", elements.blockWorldGen.size());
-    }
-
-    private static void loadBlockBurningTime(ECModElements elements) {
-        Set<ASMDataTable.ASMData> asmDataSet = elements.asm.getAll(ModBlock.BurningTime.class.getName());
-        elements.blockBurningTimes = new Object2IntArrayMap<>(asmDataSet == null ? 0 : asmDataSet.size());
-        if (asmDataSet != null) {
-            for (ASMDataTable.ASMData asmData : asmDataSet) {
-                LoaderHelper.getBlock(elements, asmData.getClassName(), asmData.getObjectName()).ifPresent(block -> {
-                    int burningTime = (int) asmData.getAnnotationInfo().getOrDefault("burningTime", -1);
-                    if (burningTime > 0) {
-                        elements.blockBurningTimes.put(block, burningTime);
-                    }
-                });
-            }
-        }
-        elements.container.warn("loadBlock - burningTime: {}", elements.blockBurningTimes.size());
     }
 
     private static void loadItem(ECModElements elements) {
@@ -438,7 +424,6 @@ public class CommonLoader {
     private static void loadFluid(ECModElements elements) {
         Set<ASMDataTable.ASMData> asmDataSet = elements.asm.getAll(ModFluid.class.getName());
         elements.fluids = LoaderHelper.createMap(asmDataSet);
-        elements.fluidBurningTimes = new Object2IntArrayMap<>(asmDataSet == null ? 0 : asmDataSet.size());
         elements.fluidResources = new ArrayList<>(asmDataSet == null ? 0 : asmDataSet.size());
         elements.fluidTabs = LoaderHelper.createMap(asmDataSet);
         elements.fluidBuckets = new ArrayList<>(asmDataSet == null ? 0 : asmDataSet.size());
@@ -484,11 +469,6 @@ public class CommonLoader {
                     if (tab != null) {
                         elements.fluidTabs.put(fluid, tab);
                     }
-                    // burningTime
-                    int burningTime = (int) info.getOrDefault("burningTime", -1);
-                    if (burningTime > 0) {
-                        elements.fluidBurningTimes.put(fluid.getName(), burningTime);
-                    }
                     // texture
                     boolean loadTexture = (boolean) info.getOrDefault("loadTexture", true);
                     if (loadTexture) {
@@ -500,7 +480,6 @@ public class CommonLoader {
         elements.container.warn("loadFluid - fluids: {}", elements.fluids.size());
         elements.container.warn("loadFluid - fluidBuckets: {}", elements.fluidBuckets.size());
         elements.container.warn("loadFluid - fluidTabs: {}", elements.fluidTabs.size());
-        elements.container.warn("loadFluid - fluidBurningTimes: {}", elements.fluidBurningTimes.size());
         elements.container.warn("loadFluid - fluidResources: {}", elements.fluidResources.size());
     }
 
@@ -872,5 +851,59 @@ public class CommonLoader {
             }
         }
         elements.container.warn("loadStaticFunction: {}", elements.staticFunction.size());
+    }
+
+    private static void loadBurnTime(ECModElements elements) {
+        elements.asm.getAll(ModBurnTime.class.getName()).forEach(asmData -> {
+            Object o;
+            Optional<Item> item = LoaderHelper.getItem(elements, asmData.getClassName(), asmData.getObjectName());
+            if (item.isPresent()) {
+                o = item.get();
+            } else {
+                Optional<Block> block = LoaderHelper.getBlock(elements, asmData.getClassName(), asmData.getObjectName());
+                if (block.isPresent()) {
+                    o = block.get();
+                } else {
+                    Optional<Fluid> fluid = LoaderHelper.getFluid(elements, asmData.getClassName(), asmData.getObjectName());
+                    o = fluid.orElse(null);
+                }
+            }
+            if (o != null) {
+                elements.burnTimes.put(o, stack -> {
+                    Map<String, Object> info = asmData.getAnnotationInfo();
+                    int defValue = (int) info.get("value");
+                    Object subTimeObj = info.get("sub");
+                    if (subTimeObj instanceof List && !((List) subTimeObj).isEmpty()) {
+                        List<HashMap> sub = (List<HashMap>) subTimeObj;
+                        for (HashMap map : sub) {
+                            int[] acceptMeta = (int[]) map.getOrDefault("metadata", new int[0]);
+                            if (acceptMeta.length == 0 || ArrayUtils.contains(acceptMeta, stack.getMetadata())) {
+                                int defBurnTime = (int) map.getOrDefault("burnTime", -1);
+                                if (defBurnTime < 0) {
+                                    HashMap methodMap = (HashMap) map.getOrDefault("method", new HashMap());
+                                    Optional<Object> time = LoaderHelper.invokeMethod(elements, methodMap, new Object[]{stack}, ItemStack.class);
+                                    if (time.isPresent()) {
+                                        return (int) time.get();
+                                    }
+                                }
+                                return defBurnTime;
+                            }
+                        }
+                    }
+                    return defValue;
+                });
+            }
+        });
+    }
+
+    private static void loadTabEditor(ECModElements elements) {
+        elements.asm.getAll(ModTabEditor.class.getName()).forEach(asmData -> {
+            LoaderHelper.getField(elements, (Map) asmData.getAnnotationInfo().get("tab")).filter(o -> o instanceof CreativeTabs).ifPresent(tab -> {
+                Map map = (Map) asmData.getAnnotationInfo().get("editor");
+                elements.tabEditors
+                        .computeIfAbsent((CreativeTabs) tab, k -> new ArrayList<>())
+                        .add(list -> LoaderHelper.invokeMethod(elements, map, new Object[]{list}, NonNullList.class));
+            });
+        });
     }
 }

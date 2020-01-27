@@ -1,7 +1,7 @@
 package com.elementtimes.elementcore.common.block.tileentity;
 
 import com.elementtimes.elementcore.ElementCore;
-import com.elementtimes.elementcore.api.annotation.ModInvokeStatic;
+import com.elementtimes.elementcore.api.annotation.old.ModInvokeStatic;
 import com.elementtimes.elementcore.api.template.tileentity.BaseTileEntity;
 import com.elementtimes.elementcore.api.template.tileentity.SideHandlerType;
 import com.elementtimes.elementcore.api.template.tileentity.recipe.IngredientPart;
@@ -72,7 +72,6 @@ public class TileTest extends BaseTileEntity {
 
     @Override
     public String getTitle() {
-//        return ElementCore.Blocks.test.getLocalizedName();
         return "";
     }
 

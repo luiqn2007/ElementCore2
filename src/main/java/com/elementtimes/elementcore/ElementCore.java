@@ -1,24 +1,28 @@
 package com.elementtimes.elementcore;
 
-import com.elementtimes.elementcore.api.annotation.ModBlock;
-import com.elementtimes.elementcore.api.annotation.ModCreativeTabs;
-import com.elementtimes.elementcore.api.annotation.ModItem;
+import com.elementtimes.elementcore.api.annotation.old.ModBlock;
+import com.elementtimes.elementcore.api.annotation.old.ModCreativeTabs;
+import com.elementtimes.elementcore.api.annotation.old.ModItem;
+import com.elementtimes.elementcore.api.annotation.part.BurnTime;
+import com.elementtimes.elementcore.api.annotation.part.Field;
+import com.elementtimes.elementcore.api.annotation.part.Method;
+import com.elementtimes.elementcore.api.annotation.tools.ModBurnTime;
+import com.elementtimes.elementcore.api.annotation.tools.ModTabEditor;
 import com.elementtimes.elementcore.api.common.ECModContainer;
 import com.elementtimes.elementcore.api.common.ECModElements;
-import com.elementtimes.elementcore.api.template.block.BaseClosableMachine;
 import com.elementtimes.elementcore.api.template.gui.client.BaseGuiContainer;
 import com.elementtimes.elementcore.api.template.gui.server.BaseContainer;
 import com.elementtimes.elementcore.api.template.tabs.CreativeTabDynamic;
 import com.elementtimes.elementcore.api.template.tileentity.interfaces.IGuiProvider;
 import com.elementtimes.elementcore.common.block.EnergyBox;
 import com.elementtimes.elementcore.common.item.DebugStick;
-import com.elementtimes.elementcore.common.block.tileentity.TileTest;
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.FluidRegistry;
@@ -115,6 +119,9 @@ public class ElementCore {
         @ModItem.HasSubItem(
                 metadatas = {0b0000, 0b0001, 0b0010},
                 models = {"minecraft:stick", "minecraft:stick", "minecraft:stick"})
+        @ModBurnTime(value = 0, sub = {
+                @BurnTime(metadata = 0, burnTime = 1000),
+                @BurnTime(metadata = {1, 2}, method = @Method(container = ElementCore.class, name = "burnTime")) })
         public static Item debugger = new DebugStick();
     }
 
@@ -130,12 +137,22 @@ public class ElementCore {
         @ModBlock(creativeTabKey = "main")
         @ModBlock.TileEntity(name = "energy", clazz = "com.elementtimes.elementcore.common.block.EnergyBox$TileEntity")
         @ModBlock.Tooltip("ITileEnergy 测试")
+        @ModBurnTime(value = 100)
         public static Block energy = new EnergyBox();
+    }
 
-//        @ModBlock(creativeTabKey = "main")
-//        @ModBlock.TileEntity(name = "test", clazz = "com.elementtimes.elementcore.common.block.tileentity.TileTest")
-//        @ModBlock.StateMapperCustom
-//        @ModBlock.StateMap
-//        public static Block test = new BaseClosableMachine<>(TileTest.class, ElementCore.INSTANCE);
+    @ModTabEditor(
+            tab = @Field(container = ElementCore.class, name = "REDSTONE"),
+            editor = @Method(container = ElementCore.class, name = "clearAll")
+    )
+    public static final CreativeTabs REDSTONE = CreativeTabs.REDSTONE;
+
+    public static void clearAll(NonNullList<ItemStack> stacks) {
+        System.out.println("clearAll");
+        stacks.clear();
+    }
+
+    public static int burnTime(ItemStack stack) {
+        return stack.getMetadata() * 1000;
     }
 }

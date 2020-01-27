@@ -1,6 +1,6 @@
 package com.elementtimes.elementcore.common.network;
 
-import com.elementtimes.elementcore.api.annotation.ModNetwork;
+import com.elementtimes.elementcore.api.annotation.old.ModNetwork;
 import com.elementtimes.elementcore.api.template.tileentity.interfaces.ITileTESR;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.nbt.NBTTagCompound;

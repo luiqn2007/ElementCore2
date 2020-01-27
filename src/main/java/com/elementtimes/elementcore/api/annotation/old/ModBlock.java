@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.api.annotation;
+package com.elementtimes.elementcore.api.annotation.old;
 
 import com.elementtimes.elementcore.api.annotation.enums.GenType;
 
@@ -34,19 +34,6 @@ public @interface ModBlock {
     String unlocalizedName() default "";
 
     String creativeTabKey() default "";
-
-    /**
-     * 燃烧时间
-     */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target({ElementType.TYPE, ElementType.FIELD})
-    @interface BurningTime {
-        /**
-         * 燃烧时间
-         * @return 燃烧时间
-         */
-        int value();
-    }
 
     /**
      * 着色器

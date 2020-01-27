@@ -2,12 +2,15 @@ buildscript {
     repositories {
         jcenter()
         maven { url = "http://files.minecraftforge.net/maven" }
+        maven { url = "https://repo.spongepowered.org/maven" }
     }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+        classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
     }
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'org.spongepowered.mixin'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
 version = modVersion
@@ -33,6 +36,10 @@ minecraft {
     replace "@version@", project.version
 }
 
+mixin {
+    add sourceSets.main, "mixins.elementcore.refmap.json"
+}
+
 dependencies {
     // you may put jars on which you depend on in ./libs
     // or you may define them like so..
@@ -54,7 +61,11 @@ dependencies {
     // for more info...
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
-
+    provided('org.spongepowered:mixin:0.8-SNAPSHOT') {
+        exclude module: 'guava'
+        exclude module: 'commons-io'
+        exclude module: 'gson'
+    }
 }
 
 processResources {
@@ -76,8 +87,22 @@ processResources {
     }
 }
 
+repositories {
+    maven { url = "https://repo.spongepowered.org/maven" }
+}
+
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
+}
+
+jar {
+    from configurations.provided.asFileTree.files.collect {
+        zipTree(it)
+    }
+
+    manifest.attributes([
+            "TweakClass": "com.elementtimes.elementcore.coremod.ECMixinTweaker"
+    ])
 }
 
 task apiJar(type: Jar) {

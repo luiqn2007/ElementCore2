@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.api.annotation;
+package com.elementtimes.elementcore.api.annotation.old;
 
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;

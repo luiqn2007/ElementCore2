@@ -15,7 +15,7 @@ import java.util.Optional;
  *
  * @author luqin2007
  */
-@SuppressWarnings({"unchecked", "unused", "WeakerAccess", "SimplifyOptionalCallChains"})
+@SuppressWarnings({"unchecked", "unused", "WeakerAccess"})
 public class ReflectUtils {
 
     private static ReflectUtils u = null;

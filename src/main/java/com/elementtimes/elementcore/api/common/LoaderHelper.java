@@ -5,9 +5,13 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraftforge.fluids.BlockFluidBase;
 import net.minecraftforge.fluids.Fluid;
+import org.objectweb.asm.Type;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -114,6 +118,39 @@ public class LoaderHelper {
             }
         }
         return creativeTabs;
+    }
+
+    public static Optional<Object> getField(@Nonnull ECModElements elements, @Nonnull Map field) {
+        Type container = (Type) field.get("container");
+        Optional<Class> aClass = container == null ? Optional.empty() : getOrLoadClass(elements, container.getClassName());
+        if (aClass.isPresent()) {
+            return ECUtils.reflect.getField(aClass.get(), (String) field.get("name"), null, Object.class, elements.container.logger);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<Object> invokeMethod(@Nonnull ECModElements elements, @Nonnull Map method, Object[] args, Class<?>... parameters) {
+        Object container;
+        try {
+            if ((Boolean) method.getOrDefault("isStatic", true)) {
+                container = null;
+            } else {
+                container = getField(elements, (HashMap) method.getOrDefault("containerObj", new HashMap())).orElseThrow(NullPointerException::new);
+            }
+            Type containerClass = (Type) method.get("container");
+            Optional<Class> classOpt = getOrLoadClass(elements, containerClass.getClassName());
+            if (classOpt.isPresent()) {
+                Method m = classOpt.get().getDeclaredMethod((String) method.get("name"), parameters);
+                if (!Modifier.isPublic(m.getModifiers())) {
+                    m.setAccessible(true);
+                }
+                return Optional.ofNullable(m.invoke(container, args));
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     public static void decorateFluidBlock(Block fluidBlock, String registerName, String creativeTabKey, String unlocalizedName, String name, int density, ECModElements initializer) {

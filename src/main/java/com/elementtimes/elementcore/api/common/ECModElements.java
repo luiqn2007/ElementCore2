@@ -12,9 +12,11 @@ import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.potion.Potion;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.gen.feature.WorldGenerator;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fluids.Fluid;
@@ -30,12 +32,11 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.channels.NetworkChannel;
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 /**
  * 总入口，用于注册所有事件，收集注解产物
@@ -61,7 +62,6 @@ public class ECModElements {
     public Map<Block, ImmutablePair<String, Class<? extends TileEntity>>> blockTileEntities = null;
     public Map<String, List<Block>> blockOreDictionaries = null;
     public Map<GenType, List<WorldGenerator>> blockWorldGen = null;
-    public Object2IntMap<Block> blockBurningTimes = null;
     public Map<Block, ModTooltip[]> blockTooltips = null;
     public boolean blockB3d = false, blockObj = false;
 
@@ -84,7 +84,6 @@ public class ECModElements {
     public Map<Fluid, CreativeTabs> fluidTabs = null;
     public Map<Fluid, Function<Fluid, Block>> fluidBlocks = null;
     public Map<Fluid, String> fluidBlockStates = null;
-    public Object2IntMap<String> fluidBurningTimes = null;
     public List<Fluid> fluidResources = null;
 
     /**
@@ -131,6 +130,8 @@ public class ECModElements {
      * 通用
      */
     public List<ModTooltip> toolTips = null;
+    public Map<Object, ToIntFunction<ItemStack>> burnTimes = new HashMap<>();
+    public Map<CreativeTabs, List<Consumer<NonNullList<ItemStack>>>> tabEditors = new HashMap<>();
 
     ECModElements(FMLPreInitializationEvent event, boolean debugEnable, Table<LoadState, Class<? extends Annotation>, BiConsumer<ASMDataTable.ASMData, ECModContainer>> customAnnotation, Set<String> packages, ModContainer modContainer) {
         this.clientElement = ECUtils.common.isClient() ? new com.elementtimes.elementcore.api.client.ECModElementsClient(this) : null;

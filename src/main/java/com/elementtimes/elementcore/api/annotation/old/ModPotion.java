@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.api.annotation;
+package com.elementtimes.elementcore.api.annotation.old;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

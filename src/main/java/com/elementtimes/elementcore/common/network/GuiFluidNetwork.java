@@ -1,6 +1,6 @@
 package com.elementtimes.elementcore.common.network;
 
-import com.elementtimes.elementcore.api.annotation.ModNetwork;
+import com.elementtimes.elementcore.api.annotation.old.ModNetwork;
 import com.elementtimes.elementcore.api.template.tileentity.SideHandlerType;
 import com.elementtimes.elementcore.api.template.tileentity.lifecycle.HandlerInfoMachineLifecycle;
 import com.elementtimes.elementcore.api.utils.FluidUtils;

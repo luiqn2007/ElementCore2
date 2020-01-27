@@ -1,6 +1,6 @@
 package com.elementtimes.elementcore.common.network;
 
-import com.elementtimes.elementcore.api.annotation.ModNetwork;
+import com.elementtimes.elementcore.api.annotation.old.ModNetwork;
 import com.elementtimes.elementcore.api.template.tileentity.lifecycle.HandlerInfoMachineLifecycle;
 import io.netty.buffer.ByteBuf;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;

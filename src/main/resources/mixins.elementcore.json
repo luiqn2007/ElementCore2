@@ -1,0 +1,11 @@
+{
+  "package": "com.elementtimes.elementcore.coremod.mixin",
+  "mixins": [
+    "TileEntityFurnaceMixin"
+  ],
+  "client": [
+    "CreativeTabsMixin"
+  ],
+  "compatibilityLevel": "JAVA_8",
+  "minVersion": "0.6"
+}

@@ -6,7 +6,6 @@ import net.minecraft.block.Block;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.potion.Potion;
 import net.minecraft.util.ResourceLocation;
@@ -51,13 +50,7 @@ public class ForgeRegister {
             IForgeRegistry<Item> registry = event.getRegistry();
             mElements.items.values().forEach(registry::register);
             mElements.blocks.values().forEach(block -> {
-                ItemBlock itemBlock = new ItemBlock(block) {
-                    @Override
-                    public int getItemBurnTime(ItemStack itemStack) {
-                        int def = super.getItemBurnTime(itemStack);
-                        return mElements.blockBurningTimes == null ? def : mElements.blockBurningTimes.getOrDefault(block, def);
-                    }
-                };
+                ItemBlock itemBlock = new ItemBlock(block);
                 //noinspection ConstantConditions
                 itemBlock.setRegistryName(block.getRegistryName());
                 registry.register(itemBlock);

@@ -28,7 +28,7 @@ public abstract class TileEntityFurnaceMixin extends TileEntityLockable {
      * 由于网易 forge 找不到 FurnaceFuelBurnTimeEvent 类，或由于某些原因该类被重写到错误的包中，所以重写下 getItemBurnTime 方法
      * @author luqin2007
      */
-    @Inject(method = "getItemBurnTime", at = @At("RETURN"))
+    @Inject(method = "getItemBurnTime", at = @At("HEAD"), cancellable = true)
     private static void inject_getItemBurnTime(ItemStack stack, CallbackInfoReturnable<Integer> returnable) {
         if (stack == null || stack.isEmpty()) {
             return;
@@ -54,7 +54,7 @@ public abstract class TileEntityFurnaceMixin extends TileEntityLockable {
                 if (time >= 0) {
                     returnable.setReturnValue(time);
                 }
-                return;
+                break;
             }
         }
     }

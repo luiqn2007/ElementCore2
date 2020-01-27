@@ -7,5 +7,6 @@
     "CreativeTabsMixin"
   ],
   "compatibilityLevel": "JAVA_8",
-  "minVersion": "0.6"
+  "minVersion": "0.6",
+  "refmap": "mixins.elementcore.refmap.json"
 }

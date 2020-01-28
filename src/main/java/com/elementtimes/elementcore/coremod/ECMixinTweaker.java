@@ -14,6 +14,7 @@ import java.net.URL;
 import java.security.CodeSource;
 import java.util.List;
 
+@Deprecated
 public class ECMixinTweaker implements ITweaker {
 
     @Override

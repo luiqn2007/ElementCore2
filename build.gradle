@@ -100,8 +100,13 @@ jar {
         zipTree(it)
     }
 
+//    manifest.attributes([
+//            "TweakClass": "com.elementtimes.elementcore.coremod.ECMixinTweaker"
+//    ])
+
     manifest.attributes([
-            "TweakClass": "com.elementtimes.elementcore.coremod.ECMixinTweaker"
+            "FMLCorePlugin": "com.elementtimes.elementcore.coremod.ECMixinFMLPlugin",
+            "FMLCorePluginContainsFMLMod": true
     ])
 }
 

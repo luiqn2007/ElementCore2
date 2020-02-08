@@ -2,12 +2,14 @@ package com.elementtimes.elementcore.api.common.event;
 
 import com.elementtimes.elementcore.api.common.ECModElements;
 import com.elementtimes.elementcore.api.common.ECUtils;
+import com.elementtimes.elementcore.common.block.EnergyBox;
 import net.minecraft.block.Block;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.potion.Potion;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -16,6 +18,8 @@ import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.registries.IForgeRegistry;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -24,6 +28,7 @@ import java.util.Objects;
  * @author luqin2007
  */
 public class ForgeRegister {
+    private static Map<ResourceLocation, Class<? extends TileEntity>> tileEntities = new HashMap<>();
 
     private ECModElements mElements;
 
@@ -55,7 +60,13 @@ public class ForgeRegister {
                 itemBlock.setRegistryName(block.getRegistryName());
                 registry.register(itemBlock);
                 if (mElements.blockTileEntities != null && mElements.blockTileEntities.containsKey(block)) {
-                    GameRegistry.registerTileEntity(mElements.blockTileEntities.get(block).right, new ResourceLocation(mElements.container.id(), mElements.blockTileEntities.get(block).left));
+                    ResourceLocation res =
+                            new ResourceLocation(mElements.container.id(), mElements.blockTileEntities.get(block).left);
+                    Class<? extends TileEntity> te = mElements.blockTileEntities.get(block).right;
+                    if (!tileEntities.values().contains(te)) {
+                        tileEntities.put(res, te);
+                        GameRegistry.registerTileEntity(te, res);
+                    }
                 }
             });
 

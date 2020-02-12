@@ -41,6 +41,10 @@ public class SimpleOreGenerator extends WorldGenerator {
                 int x = position.getX() + 8;
                 int y = yMin + rand.nextInt(yRange);
                 int z = position.getZ() + 8;
+                // Fixme
+//                int x = rand.nextInt(16) + position.getX() - 8;
+//                int y = yMin + rand.nextInt(yRange);
+//                int z = rand.nextInt(16) + position.getZ() - 8;
                 if (rand.nextFloat() <= probability) {
                     mWorldGenerator.generate(worldIn, rand, new BlockPos(x, y, z));
                 }

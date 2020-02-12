@@ -33,11 +33,11 @@ public class ForgeRegister {
     public ForgeRegister(ECModContainer container) {
         mContainer = container;
     }
-    
+
     private ECModElements elements() {
         return mContainer.elements();
     }
-    
+
     private Logger logger() {
         return mContainer.elements;
     }

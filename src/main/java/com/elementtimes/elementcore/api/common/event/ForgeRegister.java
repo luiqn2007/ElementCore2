@@ -9,6 +9,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.potion.Potion;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -19,7 +20,9 @@ import net.minecraftforge.registries.IForgeRegistry;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * 注解注册
@@ -29,6 +32,7 @@ import java.util.Objects;
 public class ForgeRegister {
 
     private ECModContainer mContainer;
+    private Set<Class<?>> teClassSet = new HashSet<>();
 
     public ForgeRegister(ECModContainer container) {
         mContainer = container;
@@ -62,7 +66,11 @@ public class ForgeRegister {
                 itemBlock.setRegistryName(Objects.requireNonNull(block.getRegistryName()));
                 registry.register(itemBlock);
                 if (elements.blockTileEntities.containsKey(block)) {
-                    GameRegistry.registerTileEntity(elements.blockTileEntities.get(block).right, new ResourceLocation(mContainer.id(), elements.blockTileEntities.get(block).left));
+                    Class<? extends TileEntity> teClass = elements.blockTileEntities.get(block).right;
+                    if (!teClassSet.contains(teClass)) {
+                        GameRegistry.registerTileEntity(teClass, new ResourceLocation(mContainer.id(), elements.blockTileEntities.get(block).left));
+                        teClassSet.add(teClass);
+                    }
                 }
             });
 

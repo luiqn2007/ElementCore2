@@ -13,7 +13,7 @@ apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'org.spongepowered.mixin'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
-version = modVersion
+version = modVersion + "-" + new Date().format("yyyyMMdd-HHmmss")
 group = "com.elementtimes.elementcore" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = modBaseName + "-" + mcVersion
 
@@ -114,7 +114,8 @@ task apiJar(type: Jar) {
     classifier = 'api'
     from sourceSets.main.output
     from sourceSets.main.allSource
-    include 'com/elementtimes/' + modBaseName + '/api/**'
+    include 'com/elementtimes/elementcore/api/**'
+    include 'com/elementtimes/elementcore/coremod/**'
 }
 
 task deobfJar(type: Jar) {

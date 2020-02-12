@@ -83,7 +83,7 @@ public class MachineRecipeCapture implements INBTSerializable<NBTTagCompound> {
         }
 
         this.fluidOutputs = new ArrayList<>(recipe.fluidOutputs.size());
-        this.fluidOutputAmounts = ECUtils.array.newArray(recipe.fluidOutputs.size(), 0);
+        this.fluidOutputAmounts = new int[recipe.fluidOutputs.size()];
         for (int i = 0; i < recipe.fluidOutputs.size(); i++) {
             IngredientPart<FluidStack> part = recipe.fluidOutputs.get(i);
             FluidStack fluid = part.getter.apply(recipe, input, fluids, i, part.probability);
@@ -117,9 +117,9 @@ public class MachineRecipeCapture implements INBTSerializable<NBTTagCompound> {
                 : ECUtils.fluid.readFromNbt((NBTTagList) nbt.getTag(NBT_RECIPE_FLUID_INPUT));
         this.fluidOutputs = !nbt.hasKey(NBT_RECIPE_FLUID_OUTPUT) ? Collections.emptyList()
                 : ECUtils.fluid.readFromNbt((NBTTagList) nbt.getTag(NBT_RECIPE_FLUID_OUTPUT));
-        this.fluidInputAmounts = !nbt.hasKey(NBT_RECIPE_FLUID_INPUT_AMOUNT) ? ECUtils.array.newArray(fluidInputs.size(), 0)
+        this.fluidInputAmounts = !nbt.hasKey(NBT_RECIPE_FLUID_INPUT_AMOUNT) ? new int[fluidInputs.size()]
                 : nbt.getIntArray(NBT_RECIPE_FLUID_INPUT_AMOUNT);
-        this.fluidOutputAmounts = !nbt.hasKey(NBT_RECIPE_FLUID_OUTPUT_AMOUNT) ? ECUtils.array.newArray(fluidOutputs.size(), 0)
+        this.fluidOutputAmounts = !nbt.hasKey(NBT_RECIPE_FLUID_OUTPUT_AMOUNT) ? new int[fluidOutputs.size()]
                 : nbt.getIntArray(NBT_RECIPE_FLUID_OUTPUT_AMOUNT);
         this.energy = nbt.getInteger(NBT_RECIPE_ENERGY);
     }

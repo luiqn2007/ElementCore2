@@ -18,8 +18,6 @@ public class ECUtils {
 
     public static MathUtils math = MathUtils.getInstance();
 
-    public static ArrayUtils array = ArrayUtils.getInstance();
-
     public static NBTUtils nbt = NBTUtils.getInstance();
 
     public static StorageUtils storage = StorageUtils.getInstance();

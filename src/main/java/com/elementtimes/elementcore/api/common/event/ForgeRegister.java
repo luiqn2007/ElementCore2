@@ -1,5 +1,6 @@
 package com.elementtimes.elementcore.api.common.event;
 
+import com.elementtimes.elementcore.api.common.ECModContainer;
 import com.elementtimes.elementcore.api.common.ECModElements;
 import com.elementtimes.elementcore.api.common.ECUtils;
 import net.minecraft.block.Block;
@@ -11,9 +12,11 @@ import net.minecraft.potion.Potion;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.registries.IForgeRegistry;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -25,50 +28,54 @@ import java.util.Objects;
  */
 public class ForgeRegister {
 
-    private ECModElements mElements;
+    private ECModContainer mContainer;
 
-    public ForgeRegister(ECModElements elements) {
-        mElements = elements;
+    public ForgeRegister(ECModContainer container) {
+        mContainer = container;
+    }
+    
+    private ECModElements elements() {
+        return mContainer.elements();
+    }
+    
+    private Logger logger() {
+        return mContainer.elements;
     }
 
     @SubscribeEvent
     public void registerBlock(RegistryEvent.Register<Block> event) {
-        ECUtils.common.runWithModActive(mElements.container.mod, () -> {
+        ECUtils.common.runWithModActive(mContainer.mod, () -> {
             IForgeRegistry<Block> registry = event.getRegistry();
-            if (mElements.blocks != null) {
-                mElements.blocks.values().forEach(registry::register);
-            }
-            if (mElements.fluidBlocks != null) {
-                mElements.fluidBlocks.keySet().forEach(fluid -> registry.register(fluid.getBlock()));
-            }
+            elements().blocks.forEach(registry::register);
+            elements().fluidBlocks.keySet().forEach(fluid -> registry.register(fluid.getBlock()));
         }, event);
     }
 
     @SubscribeEvent
     public void registerItem(RegistryEvent.Register<Item> event) {
-        ECUtils.common.runWithModActive(mElements.container.mod, () -> {
+        ECUtils.common.runWithModActive(mContainer.mod, () -> {
             IForgeRegistry<Item> registry = event.getRegistry();
-            mElements.items.values().forEach(registry::register);
-            mElements.blocks.values().forEach(block -> {
+            ECModElements elements = elements();
+            elements.items.forEach(registry::register);
+            elements.blocks.forEach(block -> {
                 ItemBlock itemBlock = new ItemBlock(block);
-                //noinspection ConstantConditions
-                itemBlock.setRegistryName(block.getRegistryName());
+                itemBlock.setRegistryName(Objects.requireNonNull(block.getRegistryName()));
                 registry.register(itemBlock);
-                if (mElements.blockTileEntities != null && mElements.blockTileEntities.containsKey(block)) {
-                    GameRegistry.registerTileEntity(mElements.blockTileEntities.get(block).right, new ResourceLocation(mElements.container.id(), mElements.blockTileEntities.get(block).left));
+                if (elements.blockTileEntities.containsKey(block)) {
+                    GameRegistry.registerTileEntity(elements.blockTileEntities.get(block).right, new ResourceLocation(mContainer.id(), elements.blockTileEntities.get(block).left));
                 }
             });
 
-            mElements.blockOreDictionaries.forEach((oreName, blocks) -> {
+            elements.blockOreNams.forEach((oreName, blocks) -> {
                 for (Block block : blocks) {
-                    mElements.container.warn("[Block]OreName: " + block.getRegistryName() + " = " + oreName);
+                    logger().warn("[Block]OreName: " + block.getRegistryName() + " = " + oreName);
                     OreDictionary.registerOre(oreName, block);
                 }
             });
 
-            mElements.itemOreDictionaries.forEach((oreName, items) -> {
+            elements.itemOreNames.forEach((oreName, items) -> {
                 for (Item item : items) {
-                    mElements.container.warn("[Item]OreName: " + item.getRegistryName() + " = " + oreName);
+                    logger().warn("[Item]OreName: " + item.getRegistryName() + " = " + oreName);
                     OreDictionary.registerOre(oreName, item);
                 }
             });
@@ -77,18 +84,18 @@ public class ForgeRegister {
 
     @SubscribeEvent
     public void registerRecipe(RegistryEvent.Register<IRecipe> event) {
-        ECUtils.common.runWithModActive(mElements.container.mod, () -> {
+        ECUtils.common.runWithModActive(mContainer.mod, () -> {
             IForgeRegistry<IRecipe> registry = event.getRegistry();
-            mElements.recipes.forEach(getter ->
+            elements().recipes.forEach(getter ->
                     Arrays.stream(getter.get()).filter(Objects::nonNull).forEach(registry::register));
         }, event);
     }
 
     @SubscribeEvent
     public void registerEnchantment(RegistryEvent.Register<Enchantment> event) {
-        ECUtils.common.runWithModActive(mElements.container.mod, () -> {
+        ECUtils.common.runWithModActive(mContainer.mod, () -> {
             IForgeRegistry<Enchantment> registry = event.getRegistry();
-            for (Enchantment enchantment : mElements.enchantments) {
+            for (Enchantment enchantment : elements().enchantments) {
                 registry.register(enchantment);
             }
         }, event);
@@ -96,11 +103,20 @@ public class ForgeRegister {
 
     @SubscribeEvent
     public void registerPotion(RegistryEvent.Register<Potion> event) {
-        ECUtils.common.runWithModActive(mElements.container.mod, () -> {
+        ECUtils.common.runWithModActive(mContainer.mod, () -> {
             IForgeRegistry<Potion> registry = event.getRegistry();
-            for (Potion potion : mElements.potions) {
+            for (Potion potion : elements().potions) {
                 registry.register(potion);
             }
+        }, event);
+    }
+
+    @SubscribeEvent
+    public void registerEntity(RegistryEvent.Register<EntityEntry> event) {
+        ECUtils.common.runWithModActive(mContainer.mod, () -> {
+            IForgeRegistry<EntityEntry> registry = event.getRegistry();
+            String id = mContainer.id();
+            elements().entities.forEach(data -> registry.register(data.toEntry(id)));
         }, event);
     }
 }

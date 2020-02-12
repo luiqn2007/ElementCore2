@@ -14,8 +14,9 @@ import com.elementtimes.elementcore.api.template.tileentity.lifecycle.HandlerInf
 import com.elementtimes.elementcore.api.template.tileentity.lifecycle.RecipeMachineLifecycle;
 import com.elementtimes.elementcore.api.template.tileentity.recipe.MachineRecipeCapture;
 import com.elementtimes.elementcore.api.template.tileentity.recipe.MachineRecipeHandler;
-import com.elementtimes.elementcore.common.network.GuiEnergyNetwork;
-import com.elementtimes.elementcore.common.network.GuiFluidNetwork;
+import com.elementtimes.elementcore.api.utils.FluidUtils;
+import com.elementtimes.elementcore.mod.net.GuiEnergyNetwork;
+import com.elementtimes.elementcore.mod.net.GuiFluidNetwork;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraft.entity.player.EntityPlayer;
@@ -95,14 +96,14 @@ public abstract class BaseTileEntity extends TileEntity implements
     private void postEnergy(EntityPlayer player, HandlerInfoMachineLifecycle.EnergyInfo info) {
         if (player instanceof EntityPlayerMP) {
             GuiEnergyNetwork energyNetwork = new GuiEnergyNetwork(getGuiId(), info.capacity, info.stored);
-            ElementCore.instance().container.elements.channel.sendTo(energyNetwork, (EntityPlayerMP) player);
+            ElementCore.instance().container.elements.simpleChannel.sendTo(energyNetwork, (EntityPlayerMP) player);
         }
     }
     private void postFluid(EntityPlayer player, HandlerInfoMachineLifecycle.FluidInfo info) {
         if (player instanceof EntityPlayerMP) {
             GuiFluidNetwork fluidNetwork = new GuiFluidNetwork();
             fluidNetwork.put(getGuiId(), info);
-            ElementCore.instance().container.elements.channel.sendTo(fluidNetwork, (EntityPlayerMP) player);
+            ElementCore.instance().container.elements.simpleChannel.sendTo(fluidNetwork, (EntityPlayerMP) player);
         }
     }
 
@@ -211,7 +212,7 @@ public abstract class BaseTileEntity extends TileEntity implements
         List<ItemStack> list = ECUtils.item.toList(itemHandler, getRecipeSlotIgnore());
         ItemStack backup = list.get(slot);
         list.set(slot, stack);
-        boolean valid = getRecipes().acceptInput(list, ECUtils.fluid.toListNotNull(getTanks(SideHandlerType.INPUT)));
+        boolean valid = getRecipes().acceptInput(list, ECUtils.fluid.toListIndexed(getTanks(SideHandlerType.INPUT), FluidUtils.EMPTY));
         list.set(slot, backup);
         return valid;
     }
@@ -253,7 +254,7 @@ public abstract class BaseTileEntity extends TileEntity implements
     }
     @Override
     public boolean isFillValid(int slot, FluidStack fluidStack) {
-        List<FluidStack> fluids = ECUtils.fluid.toListNotNull(getTanks(SideHandlerType.INPUT));
+        List<FluidStack> fluids = ECUtils.fluid.toListIndexed(getTanks(SideHandlerType.INPUT), FluidUtils.EMPTY);
         fluids.set(slot, fluidStack);
         return getRecipes().acceptInput(ECUtils.item.toList(getItemHandler(SideHandlerType.INPUT), getRecipeSlotIgnore()), fluids);
     }

@@ -316,7 +316,7 @@ public class RefHelper {
         } else {
             return defValue;
         }
-        String methodName = (String) methodMap.get("name");
+        String methodName = (String) methodMap.getOrDefault("name", "<init>");
         if (StringUtils.isNullOrEmpty(methodName)) {
             return defValue;
         }

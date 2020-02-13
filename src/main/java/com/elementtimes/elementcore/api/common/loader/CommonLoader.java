@@ -108,9 +108,8 @@ public class CommonLoader {
 
     private static void loadTabEditor(ECModElements elements) {
         ObjHelper.stream(elements, ModTabEditor.class).forEach(data -> {
-            ObjHelper.find(elements, CreativeTabs.class, ObjHelper.getDefault(data)).ifPresent(tab -> {
-                Map<String, Object> map = (Map<String, Object>) data.getAnnotationInfo().get("editor");
-                VoidInvoker invoker = RefHelper.invoker(elements, map, NonNullList.class);
+            ObjHelper.find(elements, CreativeTabs.class, data).ifPresent(tab -> {
+                VoidInvoker invoker = RefHelper.invoker(elements, ObjHelper.getDefault(data), NonNullList.class);
                 elements.tabEditors.computeIfAbsent(tab, k -> new ArrayList<>()).add(invoker::invoke);
             });
         });

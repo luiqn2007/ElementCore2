@@ -73,9 +73,9 @@ public class BlockLoader {
         ObjHelper.stream(elements, ModBlock.HarvestLevel.class).forEach(data -> {
             ObjHelper.find(elements, Block.class, data).ifPresent(block -> {
                 Map<String, Object> info = data.getAnnotationInfo();
-                ModAnnotation.EnumHolder toolClass = (ModAnnotation.EnumHolder) info.getOrDefault("toolClass", "pickaxe");
+                ModAnnotation.EnumHolder toolClass = (ModAnnotation.EnumHolder) info.get("toolClass");
                 int level = (int) info.getOrDefault("level", 2);
-                block.setHarvestLevel(toolClass.getValue(), level);
+                block.setHarvestLevel(toolClass == null ? "pickaxe" : toolClass.getValue(), level);
             });
         });
     }

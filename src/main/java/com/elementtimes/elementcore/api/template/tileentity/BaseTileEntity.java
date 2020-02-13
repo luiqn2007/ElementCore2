@@ -10,6 +10,7 @@ import com.elementtimes.elementcore.api.template.capability.item.IItemHandler;
 import com.elementtimes.elementcore.api.template.capability.item.ItemHandler;
 import com.elementtimes.elementcore.api.template.capability.item.ItemHandlerVisitor;
 import com.elementtimes.elementcore.api.template.tileentity.interfaces.*;
+import com.elementtimes.elementcore.api.template.tileentity.lifecycle.EnergyGeneratorLifecycle;
 import com.elementtimes.elementcore.api.template.tileentity.lifecycle.HandlerInfoMachineLifecycle;
 import com.elementtimes.elementcore.api.template.tileentity.lifecycle.RecipeMachineLifecycle;
 import com.elementtimes.elementcore.api.template.tileentity.recipe.MachineRecipeCapture;
@@ -177,10 +178,16 @@ public abstract class BaseTileEntity extends TileEntity implements
         return mIgnoreInputSlot;
     }
 
+    // energy
     @Override
     public EnergyHandler getEnergyHandler() { return mEnergyHandler; }
     @Override
     public SideHandlerType getEnergyType(EnumFacing facing) {
+        for (IMachineLifecycle lifecycle : getAllLifecycles()) {
+            if (lifecycle instanceof EnergyGeneratorLifecycle) {
+                return SideHandlerType.OUTPUT;
+            }
+        }
         return SideHandlerType.INPUT;
     }
 
@@ -225,6 +232,13 @@ public abstract class BaseTileEntity extends TileEntity implements
         }
         mAllItems = new ItemHandlerVisitor(mInputItems, mOutputItems);
     }
+    @Nonnull
+    @Override
+    public SideHandlerType getItemType(@Nullable EnumFacing facing) {
+        boolean hasInput = mInputItems.getSlots() > 0;
+        boolean hasOutput = mOutputItems.getSlots() > 0;
+        return getIOType(facing, hasInput, hasOutput);
+    }
 
     // tanks
     @Override
@@ -257,6 +271,12 @@ public abstract class BaseTileEntity extends TileEntity implements
         List<FluidStack> fluids = ECUtils.fluid.toListIndexed(getTanks(SideHandlerType.INPUT), FluidUtils.EMPTY);
         fluids.set(slot, fluidStack);
         return getRecipes().acceptInput(ECUtils.item.toList(getItemHandler(SideHandlerType.INPUT), getRecipeSlotIgnore()), fluids);
+    }
+    @Override
+    public SideHandlerType getTankType(@Nullable EnumFacing facing) {
+        boolean hasInput = mInputFluids.size() > 0;
+        boolean hasOutput = mOutputFluids.size() > 0;
+        return getIOType(facing, hasInput, hasOutput);
     }
 
     // gui
@@ -322,6 +342,16 @@ public abstract class BaseTileEntity extends TileEntity implements
                 handler.setSize(slot, 1);
                 slotIgnore.add(slot);
             }
+        }
+    }
+
+    private SideHandlerType getIOType(@Nullable EnumFacing facing, boolean hasInput, boolean hasOutput) {
+        if (facing == EnumFacing.UP) {
+            return hasInput ? SideHandlerType.INPUT : SideHandlerType.ALL;
+        } else if (facing == EnumFacing.DOWN) {
+            return hasOutput ? SideHandlerType.OUTPUT : SideHandlerType.READONLY;
+        } else {
+            return SideHandlerType.ALL;
         }
     }
 

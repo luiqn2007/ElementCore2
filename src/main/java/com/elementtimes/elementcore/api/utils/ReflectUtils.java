@@ -91,13 +91,13 @@ public class ReflectUtils {
      * @param aClass 要创建的对象类
      */
     public <T> Optional<T> create(@Nonnull Class<?> aClass, Object[] params, Class<? extends T> type, Logger logger) {
-        Class<?>[] paramClass = Arrays.stream(params).map(Object::getClass).toArray(Class[]::new);
         Optional<Constructor<?>> constructorOpt = Arrays.stream(aClass.getConstructors())
-                .filter(c -> c.getParameterCount() == paramClass.length)
+                .filter(c -> c.getParameterCount() == params.length)
                 .filter(c -> {
                     Class<?>[] parameterTypes = c.getParameterTypes();
-                    for (int i = 0; i < paramClass.length; i++) {
-                        if (!parameterTypes[i].isAssignableFrom(paramClass[i])) {
+                    for (int i = 0; i < params.length; i++) {
+                        Object o = params[i];
+                        if (o != null && !parameterTypes[i].isInstance(o)) {
                             return false;
                         }
                     }
@@ -361,48 +361,6 @@ public class ReflectUtils {
             e.printStackTrace();
             logger.warn("Field {} cannot set the value: \n\t{}.", field.getName(), value);
         }
-    }
-
-    public Optional<Object> getFromFieldOrMethod(Class<?> clazz, String name) {
-        Object obj = null;
-        try {
-            obj = clazz.getField(name).get(null);
-        } catch (NoSuchFieldException | IllegalAccessException ignored) { }
-        if (obj == null) {
-            try {
-                Field f = clazz.getDeclaredField(name);
-                f.setAccessible(true);
-                obj = f.get(null);
-            } catch (IllegalAccessException | NoSuchFieldException ignored) { }
-        }
-        if (obj == null) {
-            try {
-                obj = clazz.getMethod(name).invoke(null);
-            } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException ignored) { }
-        }
-        if (obj == null) {
-            try {
-                Method method = clazz.getDeclaredMethod(name);
-                method.setAccessible(true);
-                obj = method.invoke(null);
-            } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException ignored) { }
-        }
-        if (obj == null || name.contains("()")) {
-            String funcName = name.substring(0, name.indexOf("()"));
-            if (obj == null) {
-                try {
-                    obj = clazz.getMethod(funcName).invoke(null);
-                } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException ignored) { }
-            }
-            if (obj == null) {
-                try {
-                    Method method = clazz.getDeclaredMethod(funcName);
-                    method.setAccessible(true);
-                    obj = method.invoke(null);
-                } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException ignored) { }
-            }
-        }
-        return Optional.ofNullable(obj);
     }
 
     public void setFinalField(Field field, Object newValue) throws NoSuchFieldException, IllegalAccessException {

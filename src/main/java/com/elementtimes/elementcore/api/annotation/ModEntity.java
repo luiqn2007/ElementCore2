@@ -37,7 +37,7 @@ public @interface ModEntity {
      * eggColorPrimary 怪物蛋主要颜色
      * eggColorSecondary 怪物蛋次要颜色
      */
-    boolean hasEgg() default false;
+    boolean hasEgg() default true;
     int eggColorPrimary() default 0x000000;
     int eggColorSecondary() default 0x000000;
 

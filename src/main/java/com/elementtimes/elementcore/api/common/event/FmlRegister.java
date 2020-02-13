@@ -4,7 +4,9 @@ import com.elementtimes.elementcore.api.annotation.enums.LoadState;
 import com.elementtimes.elementcore.api.common.ECModContainer;
 import com.elementtimes.elementcore.api.common.ECModElements;
 import com.elementtimes.elementcore.api.common.ECUtils;
+import com.elementtimes.elementcore.api.common.loader.CapabilityLoader;
 import com.elementtimes.elementcore.api.common.loader.NetworkLoader;
+import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
@@ -45,6 +47,7 @@ public class FmlRegister {
     
     public void onPreInit(FMLPreInitializationEvent event) {
         ECUtils.common.runWithModActive(mContainer.mod, () -> {
+            registerCapability();
             registerFluids();
             runCustomAnnotation(LoadState.PreInit);
         }, event);
@@ -69,6 +72,12 @@ public class FmlRegister {
         ECUtils.common.runWithModActive(mContainer.mod, () -> {
             elements().commands.forEach(event::registerServerCommand);
         }, event);
+    }
+
+    private void registerCapability() {
+        for (CapabilityLoader.CapabilityData data : elements().capabilities) {
+            CapabilityManager.INSTANCE.register(data.typeInterface, data.storage, data::factory);
+        }
     }
 
     private void registerGui() {

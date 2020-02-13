@@ -12,7 +12,6 @@ import com.elementtimes.elementcore.api.template.tileentity.interfaces.ITileTESR
 import net.minecraft.block.Block;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.client.renderer.block.statemap.IStateMapper;
-import net.minecraft.client.renderer.block.statemap.StateMap;
 import net.minecraft.client.renderer.color.IBlockColor;
 import net.minecraft.client.renderer.color.IItemColor;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
@@ -41,27 +40,22 @@ public class BlockClientLoader {
 
     private static void loadBlockStateMap(ECModElements elements) {
         ECModElementsClient client = elements.getClientNotInit();
-        ObjHelper.stream(elements, ModBlock.StateMapper.class).forEach(data -> {
+        ObjHelper.stream(elements, ModBlock.StateMap.class).forEach(data -> {
             ObjHelper.find(elements, Block.class, data).ifPresent(block -> {
                 Map<String, Object> info = data.getAnnotationInfo();
                 String suffix = (String) info.get("suffix");
-                String propertyName = (String) info.get("propertyName");
-                List<String> propertyIgnore = (List<String>) info.getOrDefault("propertyIgnore", Collections.emptyList());
-                String propertyIn = (String) info.get("propertyIn");
-                ObjHelper.findClass(elements, propertyIn).ifPresent(aClass -> {
-                    StateMap.Builder builder = new StateMap.Builder().withSuffix(suffix);
-                    ECUtils.reflect.get(aClass, propertyName, null, IProperty.class, elements).ifPresent(o -> builder.withName((IProperty<?>) o));
-                    IProperty<?>[] ignoreProperties = propertyIgnore.stream()
-                            .map(ignoreProperty -> ECUtils.reflect.get(aClass, ignoreProperty, block, IProperty.class, elements))
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .toArray(IProperty[]::new);
-                    builder.ignore(ignoreProperties);
-                    client.blockStateMaps.put(block, builder.build());
-                });
+                Object propertyName = info.get("name");
+                List<?> propertyIgnore = (List<?>) info.getOrDefault("ignores", Collections.emptyList());
+                List<IProperty<?>> ignores = new ArrayList<>();
+                propertyIgnore.forEach(object -> RefHelper.get(elements, object, IProperty.class).ifPresent(ignores::add));
+                net.minecraft.client.renderer.block.statemap.StateMap.Builder builder = new net.minecraft.client.renderer.block.statemap.StateMap.Builder()
+                        .withSuffix(suffix)
+                        .ignore(ignores.toArray(new IProperty<?>[0]));
+                RefHelper.get(elements, propertyName, IProperty.class).ifPresent(builder::withName);
+                client.blockStateMaps.put(block, builder.build());
             });
         });
-        ObjHelper.stream(elements, ModBlock.StateMap.class).forEach(data -> {
+        ObjHelper.stream(elements, ModBlock.StateMapper.class).forEach(data -> {
             ObjHelper.find(elements, Block.class, data).ifPresent(block -> {
                 RefHelper.get(elements, ObjHelper.getDefault(data), IStateMapper.class).ifPresent(mapper -> {
                     client.blockStateMaps.put(block, mapper);
@@ -141,7 +135,7 @@ public class BlockClientLoader {
 
     private static void loadBlockTooltips(ECModElements elements) {
         ECModElementsClient client = elements.getClientNotInit();
-        ObjHelper.stream(elements, ModBlock.Tooltips.class).forEach(data -> {
+        ObjHelper.stream(elements, ModBlock.Tooltip.class).forEach(data -> {
             List<String> tooltips = ObjHelper.getDefault(data);
             if (!tooltips.isEmpty()) {
                 ObjHelper.find(elements, Block.class, data).ifPresent(block -> {

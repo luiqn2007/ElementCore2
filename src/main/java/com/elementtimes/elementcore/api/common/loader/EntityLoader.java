@@ -48,7 +48,7 @@ public class EntityLoader {
         public EntityData(Map<String, Object> data) {
             this((int) data.getOrDefault("network", 2), (String) data.get("id"), (String) data.get("name"),
                     (int) data.getOrDefault("trackerRange", 64), (int) data.getOrDefault("updateFrequency", 3), (boolean) data.getOrDefault("sendVelocityUpdate", true),
-                    (boolean) data.getOrDefault("hasEgg", false), (int) data.getOrDefault("eggColorPrimary", 0x000000), (int) data.getOrDefault("eggColorSecondary", 0x000000),
+                    (boolean) data.getOrDefault("hasEgg", true), (int) data.getOrDefault("eggColorPrimary", 0x000000), (int) data.getOrDefault("eggColorSecondary", 0x000000),
                     (boolean) data.getOrDefault("canSpawn", false), EnumCreatureType.valueOf((String) data.getOrDefault("spawnType", "CREATURE")),
                     (int) data.getOrDefault("spawnWeight", 0), (int) data.getOrDefault("spawnMin", 0), (int) data.getOrDefault("spawnMax", 0),
                     (List<String>) data.getOrDefault("biomeIds", Collections.singletonList("plains")));

@@ -1,7 +1,7 @@
 package com.elementtimes.elementcore.api.common.loader;
 
-import com.elementtimes.elementcore.api.annotation.enums.GenType;
 import com.elementtimes.elementcore.api.annotation.ModBlock;
+import com.elementtimes.elementcore.api.annotation.enums.GenType;
 import com.elementtimes.elementcore.api.common.ECModElements;
 import com.elementtimes.elementcore.api.common.ECUtils;
 import com.elementtimes.elementcore.api.common.helper.ObjHelper;
@@ -81,7 +81,8 @@ public class BlockLoader {
                 float probability = (float) info.getOrDefault("probability", 0.6f);
                 int[] dimBlackList = (int[]) info.getOrDefault("dimBlackList", new int[0]);
                 int[] dimWhiteList = (int[]) info.getOrDefault("dimWhiteList", new int[0]);
-                GenType type = (GenType) info.getOrDefault("type", GenType.Ore);
+                ModAnnotation.EnumHolder typeHolder = (ModAnnotation.EnumHolder) info.get("type");
+                GenType type = typeHolder == null ? GenType.Ore : GenType.valueOf(typeHolder.getValue());
                 List<WorldGenerator> worldGeneratorList = elements.blockWorldGen.getOrDefault(type, new ArrayList<>());
                 worldGeneratorList.add(new SimpleOreGenerator(yRange, yMin, count, times, probability,
                         dimBlackList, dimWhiteList, block.getDefaultState()));
@@ -91,12 +92,7 @@ public class BlockLoader {
         ObjHelper.stream(elements, ModBlock.WorldGenObj.class).forEach(data -> {
             ObjHelper.find(elements, Block.class, data).ifPresent(block -> {
                 ModAnnotation.EnumHolder typeValue = (ModAnnotation.EnumHolder) data.getAnnotationInfo().get("type");
-                GenType type;
-                if (typeValue == null) {
-                    type = GenType.Ore;
-                } else {
-                    type = GenType.valueOf(typeValue.getValue());
-                }
+                GenType type = typeValue == null ? GenType.Ore : GenType.valueOf(typeValue.getValue());
                 RefHelper.get(elements, ObjHelper.getDefault(data), WorldGenerator.class).ifPresent(generator -> {
                     elements.blockWorldGen.computeIfAbsent(type, t -> new ArrayList<>()).add(generator);
                 });

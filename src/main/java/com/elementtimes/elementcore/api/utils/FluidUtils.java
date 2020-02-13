@@ -1,22 +1,19 @@
 package com.elementtimes.elementcore.api.utils;
 
 import com.elementtimes.elementcore.api.template.capability.fluid.ITankHandler;
-import com.elementtimes.elementcore.api.template.capability.fluid.TankHandler;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.fluids.*;
-import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
-import net.minecraftforge.fluids.capability.templates.*;
-import net.minecraftforge.fluids.capability.wrappers.BlockLiquidWrapper;
+import net.minecraftforge.fluids.capability.templates.FluidHandlerItemStack;
+import net.minecraftforge.fluids.capability.templates.FluidHandlerItemStackSimple;
 import net.minecraftforge.fluids.capability.wrappers.FluidBucketWrapper;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;

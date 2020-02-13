@@ -74,7 +74,7 @@ public class ForgeRegister {
                 }
             });
 
-            elements.blockOreNams.forEach((oreName, blocks) -> {
+            elements.blockOreNames.forEach((oreName, blocks) -> {
                 for (Block block : blocks) {
                     logger().warn("[Block]OreName: " + block.getRegistryName() + " = " + oreName);
                     OreDictionary.registerOre(oreName, block);
@@ -95,7 +95,8 @@ public class ForgeRegister {
         ECUtils.common.runWithModActive(mContainer.mod, () -> {
             IForgeRegistry<IRecipe> registry = event.getRegistry();
             elements().recipes.forEach(getter ->
-                    Arrays.stream(getter.get()).filter(Objects::nonNull).forEach(registry::register));
+                    Arrays.stream(getter.get()).filter(Objects::nonNull).forEach(elements().allRecipes::add));
+            elements().allRecipes.forEach(registry::register);
         }, event);
     }
 

@@ -47,14 +47,14 @@ public class LoaderHelperClient {
         return null;
     }
 
-    public static IBlockColor getObjectBlockColor(ECModElements elements, @Nullable Object method) {
-        String key = key(method);
+    public static IBlockColor getObjectBlockColor(ECModElements elements, @Nullable Object object) {
+        String key = key(object);
         if (key != null) {
             ECModElementsClient client = elements.getClientNotInit();
             if (client.blockObjectColors.containsKey(key)) {
                 return client.blockObjectColors.get(key);
             } else {
-                Optional<? extends IBlockColor> colorOpt = RefHelper.get(elements, method, IBlockColor.class);
+                Optional<? extends IBlockColor> colorOpt = RefHelper.get(elements, object, IBlockColor.class);
                 if (colorOpt.isPresent()) {
                     IBlockColor color = colorOpt.get();
                     client.blockObjectColors.put(key, color);
@@ -86,14 +86,14 @@ public class LoaderHelperClient {
         return null;
     }
 
-    public static IItemColor getObjectItemColor(ECModElements elements, @Nullable Object method) {
-        String key = key(method);
+    public static IItemColor getObjectItemColor(ECModElements elements, @Nullable Object object) {
+        String key = key(object);
         if (key != null) {
             ECModElementsClient client = elements.getClientNotInit();
             if (client.itemObjectColors.containsKey(key)) {
                 return client.itemObjectColors.get(key);
             } else {
-                Optional<? extends IItemColor> colorOpt = RefHelper.get(elements, method, IItemColor.class);
+                Optional<? extends IItemColor> colorOpt = RefHelper.get(elements, object, IItemColor.class);
                 if (colorOpt.isPresent()) {
                     IItemColor color = colorOpt.get();
                     client.itemObjectColors.put(key, color);

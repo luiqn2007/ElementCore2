@@ -24,7 +24,7 @@ public @interface ModTooltip {
      * 获取物品栈的 Tooltip
      * 参数
      *  ItemStack：要附加的物品栈
-     *  ArrayList<String>：所有附加在该物品上的 Tooltips，可操作该列表修改 Tooltip
+     *  List<String>：所有附加在该物品上的 Tooltips，可操作该列表修改 Tooltip
      * 返回值
      *  无
      * @return Tooltip 获取器

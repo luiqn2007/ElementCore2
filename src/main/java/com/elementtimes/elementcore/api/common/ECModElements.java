@@ -61,14 +61,14 @@ public class ECModElements extends AbstractLogger {
     /**
      * Class
      */
-    public final HashMap<String, Class<?>> classes = new HashMap<>();
+    public final Map<String, Class<?>> classes = new HashMap<>();
 
     /**
      * Block
      */
     public final List<Block> blocks = new ArrayList<>();
     public final Map<Block, ImmutablePair<String, Class<? extends TileEntity>>> blockTileEntities = new HashMap<>();
-    public final Map<String, List<Block>> blockOreNams = new HashMap<>();
+    public final Map<String, List<Block>> blockOreNames = new HashMap<>();
     public final Map<GenType, List<WorldGenerator>> blockWorldGen = new HashMap<>();
 
     /**
@@ -81,6 +81,7 @@ public class ECModElements extends AbstractLogger {
      * Recipe
      */
     public final List<Supplier<IRecipe[]>> recipes = new ArrayList<>();
+    public final List<IRecipe> allRecipes = new ArrayList<>();
 
     /**
      * Fluid

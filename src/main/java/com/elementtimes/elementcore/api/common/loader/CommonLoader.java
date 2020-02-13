@@ -123,7 +123,7 @@ public class CommonLoader {
                 if (entry instanceof Item) {
                     names.forEach(name -> elements.itemOreNames.computeIfAbsent(name, n -> new ArrayList<>()).add((Item) entry));
                 } else if (entry instanceof Block) {
-                    names.forEach(name -> elements.blockOreNams.computeIfAbsent(name, n -> new ArrayList<>()).add((Block) entry));
+                    names.forEach(name -> elements.blockOreNames.computeIfAbsent(name, n -> new ArrayList<>()).add((Block) entry));
                 }
             });
         });

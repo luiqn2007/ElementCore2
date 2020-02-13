@@ -1,7 +1,5 @@
 package com.elementtimes.elementcore.api.annotation;
 
-import net.minecraftforge.fml.relauncher.Side;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

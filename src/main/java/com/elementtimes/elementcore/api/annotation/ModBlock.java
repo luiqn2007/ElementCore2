@@ -4,7 +4,6 @@ import com.elementtimes.elementcore.api.annotation.enums.GenType;
 import com.elementtimes.elementcore.api.annotation.enums.HarvestType;
 import com.elementtimes.elementcore.api.annotation.part.Getter;
 import com.elementtimes.elementcore.api.annotation.part.Getter2;
-import net.minecraft.tileentity.TileEntity;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -130,30 +129,28 @@ public @interface ModBlock {
     /**
      * 使用 StateMap
      * 指定材质应用于方块本体
-     * @see StateMap
-     */
-    @Target(ElementType.FIELD)
-    @Retention(RetentionPolicy.RUNTIME)
-    @interface StateMapper {
-        // suffix() 模型文件名的后缀
-        String suffix() default "";
-        // IProperty 属性名
-        // withName() 模型 state 文件名的主体
-        String propertyName();
-        // ignore() 模型 state 文件中 忽略的属性
-        String[] propertyIgnore() default {};
-        // IProperty 属性所在类
-        String propertyIn();
-    }
-
-    /**
-     * 使用自定义 IStateMap
-     * 指定材质应用于方块本体
      * @see StateMapper
      */
     @Target(ElementType.FIELD)
     @Retention(RetentionPolicy.RUNTIME)
     @interface StateMap {
+        // suffix() 模型文件名的后缀
+        String suffix() default "";
+        // IProperty 属性名
+        // withName() 模型 state 文件名的主体
+        Getter2 name();
+        // ignore() 模型 state 文件中 忽略的属性
+        Getter2[] ignores() default {};
+    }
+
+    /**
+     * 使用自定义 IStateMap
+     * 指定材质应用于方块本体
+     * @see StateMap
+     */
+    @Target(ElementType.FIELD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @interface StateMapper {
         Getter2 value();
     }
 
@@ -216,7 +213,7 @@ public @interface ModBlock {
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
-    @interface Tooltips {
+    @interface Tooltip {
         /**
          * 简单的 Tooltips 设置
          * 使用 {@link com.elementtimes.elementcore.api.annotation.tools.ModTooltip} 可根据物品栈详细修改 Tooltip

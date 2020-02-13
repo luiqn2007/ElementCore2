@@ -16,23 +16,19 @@ import java.util.function.Supplier;
 public class CapabilityLoader {
 
     public static void load(ECModElements elements) {
-        elements.warn("loadCapability: {}", elements.capabilities.size());
         ObjHelper.stream(elements, ModCapability.class).forEach(data -> {
-            ObjHelper.findClass(elements, data.getClassName()).ifPresent(clazz -> {
-                Map<String, Object> info = data.getAnnotationInfo();
-                Type type = (Type) info.get("type");
-                Map<String, Object> factory = (Map<String, Object>) info.get("typeFactory");
-                Map<String, Object> storage = (Map<String, Object>) info.get("storage");
-                Optional<Class<?>> typeClassOpt = ObjHelper.findClass(elements, type.getClassName());
-                Optional<? extends IStorage> storageOpt = RefHelper.get(elements, storage, IStorage.class);
-                Invoker<Object> factoryFunc = RefHelper.invoker(elements, factory, Invoker.empty());
-                if (typeClassOpt.isPresent() && factory != null && storageOpt.isPresent()) {
-                    CapabilityData capability =
-                            new CapabilityData(typeClassOpt.get(), storageOpt.get(), factoryFunc::invoke, elements);
-                    elements.capabilities.add(capability);
-                    CapabilityManager.INSTANCE.register(capability.typeInterface, capability.storage, capability::factory);
-                }
-            });
+            Map<String, Object> info = data.getAnnotationInfo();
+            Type type = (Type) info.get("type");
+            Map<String, Object> factory = (Map<String, Object>) info.get("typeFactory");
+            Map<String, Object> storage = (Map<String, Object>) info.get("storage");
+            Optional<Class<?>> typeClassOpt = ObjHelper.findClass(elements, type.getClassName());
+            Optional<? extends IStorage> storageOpt = RefHelper.get(elements, storage, IStorage.class);
+            Invoker<Object> factoryFunc = RefHelper.invoker(elements, factory, Invoker.empty());
+            if (typeClassOpt.isPresent() && factory != null && storageOpt.isPresent()) {
+                CapabilityData capability =
+                        new CapabilityData(typeClassOpt.get(), storageOpt.get(), factoryFunc::invoke);
+                elements.capabilities.add(capability);
+            }
         });
     }
 
@@ -40,17 +36,15 @@ public class CapabilityLoader {
         public final Class typeInterface;
         public final IStorage storage;
         public final Supplier<Object> factory;
-        public final ECModElements elements;
 
         public Object factory() {
             return factory.get();
         }
 
-        public CapabilityData(Class<?> t, IStorage s, Supplier<Object> f, ECModElements e) {
+        public CapabilityData(Class<?> t, IStorage s, Supplier<Object> f) {
             typeInterface = t;
             storage = s;
             factory = f;
-            elements = e;
         }
     }
 }

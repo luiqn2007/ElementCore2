@@ -23,14 +23,14 @@ public @interface ModItem {
 
     /**
      * RegisterName，代表物品注册名
-     * 当该注解注解 Field 且物品 registerName 与属性名相同（忽略大小写，使用 toLowerCase 处理）时，可省略
+     * 当 registerName 与属性名相同（忽略大小写，使用 toLowerCase 处理）时，可省略
      * @return registerName
      */
     String registerName() default "";
 
     /**
      * UnlocalizedName，用于获取物品显示名
-     * 当 unlocalizedName 与 registerName 相同时，可省略
+     * 当 unlocalizedName 与属性名相同（忽略大小写，使用 toLowerCase 处理）时，可省略
      * @return unlocalizedName
      */
     String unlocalizedName() default "";
@@ -71,7 +71,7 @@ public @interface ModItem {
      * 等价于
      *  setHasSubtypes(true);
      *  setMaxDamage(0);
-     *  setNoRepair()
+     *  setNoRepair();
      * 具体子类型信息需要自行重写 getSubItems 方法
      *
      * @see Item#setHasSubtypes(boolean)

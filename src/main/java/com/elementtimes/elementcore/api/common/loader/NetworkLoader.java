@@ -7,7 +7,6 @@ import com.elementtimes.elementcore.api.common.ECUtils;
 import com.elementtimes.elementcore.api.common.helper.ObjHelper;
 import com.elementtimes.elementcore.api.common.helper.RefHelper;
 import net.minecraftforge.fml.common.discovery.asm.ModAnnotation;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 
 import java.util.List;
@@ -18,7 +17,7 @@ public class NetworkLoader {
         if (elements.simpleChannel != null) {
             ObjHelper.stream(elements, ModSimpleNetwork.class).forEach(data -> {
                 ObjHelper.findClass(elements, data.getClassName()).ifPresent(aClass -> {
-                    RefHelper.<IMessageHandler<? extends IMessage, ? extends IMessage>>get(elements, ObjHelper.getDefault(data), null).ifPresent(handler -> {
+                    RefHelper.get(elements, ObjHelper.getDefault(data), IMessageHandler.class).ifPresent(handler -> {
                         List<ModAnnotation.EnumHolder> sideHolders = (List<ModAnnotation.EnumHolder>) data.getAnnotationInfo().get("side");
                         boolean server = false, client = false;
                         if (sideHolders != null) {

@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  * @author luqin2007
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE, ElementType.FIELD})
 public @interface ModCapability {
 
     /**

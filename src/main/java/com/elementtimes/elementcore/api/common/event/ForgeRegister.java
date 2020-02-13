@@ -50,8 +50,25 @@ public class ForgeRegister {
     public void registerBlock(RegistryEvent.Register<Block> event) {
         ECUtils.common.runWithModActive(mContainer.mod, () -> {
             IForgeRegistry<Block> registry = event.getRegistry();
-            elements().blocks.forEach(registry::register);
-            elements().fluidBlocks.keySet().forEach(fluid -> registry.register(fluid.getBlock()));
+            ECModElements elements = elements();
+            elements.blocks.forEach(block -> {
+                registry.register(block);
+                // te
+                if (elements.blockTileEntities.containsKey(block)) {
+                    Class<? extends TileEntity> teClass = elements.blockTileEntities.get(block).right;
+                    if (!teClassSet.contains(teClass)) {
+                        GameRegistry.registerTileEntity(teClass, new ResourceLocation(mContainer.id(), elements.blockTileEntities.get(block).left));
+                        teClassSet.add(teClass);
+                    }
+                }
+            });
+            elements.blockTileEntitiesNull.forEach((s, teClass) -> {
+                if (!teClassSet.contains(teClass)) {
+                    GameRegistry.registerTileEntity(teClass, new ResourceLocation(mContainer.id(), s));
+                    teClassSet.add(teClass);
+                }
+            });
+            elements.fluidBlocks.keySet().forEach(fluid -> registry.register(fluid.getBlock()));
         }, event);
     }
 
@@ -65,13 +82,6 @@ public class ForgeRegister {
                 ItemBlock itemBlock = new ItemBlock(block);
                 itemBlock.setRegistryName(Objects.requireNonNull(block.getRegistryName()));
                 registry.register(itemBlock);
-                if (elements.blockTileEntities.containsKey(block)) {
-                    Class<? extends TileEntity> teClass = elements.blockTileEntities.get(block).right;
-                    if (!teClassSet.contains(teClass)) {
-                        GameRegistry.registerTileEntity(teClass, new ResourceLocation(mContainer.id(), elements.blockTileEntities.get(block).left));
-                        teClassSet.add(teClass);
-                    }
-                }
             });
 
             elements.blockOreNames.forEach((oreName, blocks) -> {

@@ -20,6 +20,7 @@ import org.objectweb.asm.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class BlockLoader {
 
@@ -43,19 +44,28 @@ public class BlockLoader {
 
     private static void loadBlockTileEntity(ECModElements elements) {
         ObjHelper.stream(elements, ModBlock.TileEntity.class).forEach(data -> {
-            ObjHelper.find(elements, Block.class, data).ifPresent(block -> {
+            String objectName = data.getObjectName();
+            Block block = StringUtils.isNullOrEmpty(objectName) ? null : ObjHelper.find(elements, Block.class, data).orElse(null);
+            if (block == null) {
+                String className = data.getClassName();
+                String name = (String) data.getAnnotationInfo().getOrDefault("name", className.substring(className.indexOf(".")));
+                Type type = ObjHelper.getDefault(data);
+                ObjHelper.<TileEntity>findClass(elements, type.getClassName()).ifPresent(aClass -> {
+                    elements.blockTileEntitiesNull.put(name, aClass);
+                });
+            } else {
                 Map<String, Object> teInfo = data.getAnnotationInfo();
                 String name2;
                 try {
                     name2 = (String) teInfo.getOrDefault("name", block.getRegistryName().getResourcePath());
                 } catch (NullPointerException e) {
-                    name2 = data.getObjectName();
+                    name2 = objectName;
                 }
                 String name = name2;
                 Type type = ObjHelper.getDefault(data);
                 ObjHelper.<TileEntity>findClass(elements, type.getClassName())
                         .ifPresent(aClass -> elements.blockTileEntities.put(block, ImmutablePair.of(name, aClass)));
-            });
+            }
         });
     }
 

@@ -68,6 +68,7 @@ public class ECModElements extends AbstractLogger {
      */
     public final List<Block> blocks = new ArrayList<>();
     public final Map<Block, ImmutablePair<String, Class<? extends TileEntity>>> blockTileEntities = new HashMap<>();
+    public final Map<String, Class<? extends TileEntity>> blockTileEntitiesNull = new HashMap<>();
     public final Map<String, List<Block>> blockOreNames = new HashMap<>();
     public final Map<GenType, List<WorldGenerator>> blockWorldGen = new HashMap<>();
 

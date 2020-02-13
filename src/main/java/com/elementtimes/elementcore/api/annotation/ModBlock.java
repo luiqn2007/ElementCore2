@@ -44,7 +44,7 @@ public @interface ModBlock {
      *  value: 对应 TileEntity 类全类名
      */
     @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
+    @Target({ElementType.FIELD, ElementType.TYPE})
     @interface TileEntity {
         String name() default "";
         Class<? extends net.minecraft.tileentity.TileEntity> value();

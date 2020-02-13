@@ -82,7 +82,7 @@ public class FmlRegister {
 
     private void registerGui() {
         if (elements().guiHandler != null) {
-            NetworkRegistry.INSTANCE.registerGuiHandler(mContainer.mod, elements().guiHandler);
+            NetworkRegistry.INSTANCE.registerGuiHandler(mContainer.mod.getMod(), elements().guiHandler);
         }
     }
 

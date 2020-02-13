@@ -20,8 +20,10 @@ import org.objectweb.asm.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
+/**
+ * @author luqin2007
+ */
 public class BlockLoader {
 
     public static void load(ECModElements elements) {
@@ -45,7 +47,7 @@ public class BlockLoader {
     private static void loadBlockTileEntity(ECModElements elements) {
         ObjHelper.stream(elements, ModBlock.TileEntity.class).forEach(data -> {
             String objectName = data.getObjectName();
-            Block block = StringUtils.isNullOrEmpty(objectName) ? null : ObjHelper.find(elements, Block.class, data).orElse(null);
+            Block block = ObjHelper.find(elements, Block.class, data).orElse(null);
             if (block == null) {
                 String className = data.getClassName();
                 String name = (String) data.getAnnotationInfo().getOrDefault("name", className.substring(className.indexOf(".")));

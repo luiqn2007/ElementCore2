@@ -13,7 +13,7 @@ public class CommandClientLoader {
     public static void load(ECModElements elements) {
         ObjHelper.stream(elements, ModCommand.class).forEach(data -> {
             if ((boolean) data.getAnnotationInfo().getOrDefault("client", false)) {
-                ObjHelper.findOrNew(elements, ICommand.class, data).ifPresent(elements.getClientNotInit().commands::add);
+                ObjHelper.find(elements, ICommand.class, data).ifPresent(elements.getClientNotInit().commands::add);
             }
         });
     }

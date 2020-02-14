@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.mod.net;
+package com.elementtimes.elementcore.api.common.net;
 
 import com.elementtimes.elementcore.api.annotation.ModSimpleNetwork;
 import com.elementtimes.elementcore.api.annotation.part.Getter;
@@ -57,10 +57,12 @@ public class TESRRenderNetwork implements IMessage {
 
         @Override
         public IMessage onMessage(TESRRenderNetwork message, MessageContext ctx) {
-            if (message.isValid && net.minecraftforge.fml.client.FMLClientHandler.instance().getWorldClient().provider.getDimension() == message.dim) {
-                TileEntity te = net.minecraftforge.fml.client.FMLClientHandler.instance().getWorldClient().getTileEntity(message.pos);
-                if (te instanceof ITileTESR) {
-                    ((ITileTESR) te).receiveRenderMessage(message.nbt);
+            synchronized (this) {
+                if (message.isValid && net.minecraftforge.fml.client.FMLClientHandler.instance().getWorldClient().provider.getDimension() == message.dim) {
+                    TileEntity te = net.minecraftforge.fml.client.FMLClientHandler.instance().getWorldClient().getTileEntity(message.pos);
+                    if (te instanceof ITileTESR) {
+                        ((ITileTESR) te).receiveRenderMessage(message.nbt);
+                    }
                 }
             }
             return null;

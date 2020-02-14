@@ -2,15 +2,11 @@ package com.elementtimes.elementcore;
 
 import com.elementtimes.elementcore.api.annotation.ModItem;
 import com.elementtimes.elementcore.api.annotation.ModTab;
-import com.elementtimes.elementcore.api.annotation.part.Getter2;
 import com.elementtimes.elementcore.api.annotation.part.Method2;
 import com.elementtimes.elementcore.api.annotation.tools.ModColor;
-import com.elementtimes.elementcore.api.annotation.tools.ModColorObj;
 import com.elementtimes.elementcore.api.common.ECModContainer;
 import com.elementtimes.elementcore.api.common.ECModElements;
 import com.elementtimes.elementcore.api.template.tabs.CreativeTabDynamic;
-import com.elementtimes.elementcore.mod.CommonProxy;
-import com.elementtimes.elementcore.mod.DebugStick;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -46,8 +42,8 @@ public class ElementCore {
         return ECModElements.builder();
     }
 
-    @SidedProxy(serverSide = "com.elementtimes.elementcore.mod.CommonProxy",
-            clientSide = "com.elementtimes.elementcore.mod.ClientProxy")
+    @SidedProxy(serverSide = "com.elementtimes.elementcore.CommonProxy",
+            clientSide = "com.elementtimes.elementcore.ClientProxy")
     private static CommonProxy PROXY;
 
     public ECModContainer container;
@@ -83,7 +79,7 @@ public class ElementCore {
 
     public static class Items {
         @ModItem(creativeTabKey = "main")
-        @ModColor(item = @Method2(value = "com.elementtimes.elementcore.mod.DebugStick", name = "color"))
+        @ModColor(item = @Method2(value = "com.elementtimes.elementcore.DebugStick", name = "color"))
         @ModItem.HasSubItem(
                 metadatas = {0b0000, 0b0001},
                 models = {"minecraft:stick", "minecraft:stick"})

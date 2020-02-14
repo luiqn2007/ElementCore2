@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.mod.net;
+package com.elementtimes.elementcore.api.common.net;
 
 import com.elementtimes.elementcore.api.annotation.ModSimpleNetwork;
 import com.elementtimes.elementcore.api.annotation.part.Getter;

@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.mod.net;
+package com.elementtimes.elementcore.api.common.net;
 
 import com.elementtimes.elementcore.api.annotation.ModSimpleNetwork;
 import com.elementtimes.elementcore.api.annotation.part.Getter;
@@ -115,7 +115,7 @@ public class GuiFluidNetwork implements IMessage {
         public Handler() {}
 
         @Override
-        synchronized public IMessage onMessage(GuiFluidNetwork message, MessageContext ctx) {
+        public IMessage onMessage(GuiFluidNetwork message, MessageContext ctx) {
             synchronized (this) {
                 if (message.isValid) {
                     Map<SideHandlerType, Int2ObjectMap<ImmutablePair<FluidStack, Integer>>> fluids = new HashMap<>();

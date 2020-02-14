@@ -124,7 +124,7 @@ public class FmlRegister {
                 elements.warn("Network[S]{}: {}", i, network.message);
                 elements.simpleChannel.registerMessage(network.handler, network.message, i, Side.SERVER);
             }
-            if (network.server) {
+            if (network.client) {
                 elements.warn("Network[C]{}: {}", i, network.message);
                 elements.simpleChannel.registerMessage(network.handler, network.message, i, Side.CLIENT);
             }

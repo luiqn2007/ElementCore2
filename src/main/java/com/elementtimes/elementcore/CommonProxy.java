@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.mod;
+package com.elementtimes.elementcore;
 
 import com.elementtimes.elementcore.ElementCore;
 import com.elementtimes.elementcore.api.common.ECModContainer;

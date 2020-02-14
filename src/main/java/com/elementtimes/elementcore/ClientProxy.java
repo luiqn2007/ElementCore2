@@ -1,6 +1,5 @@
-package com.elementtimes.elementcore.mod;
+package com.elementtimes.elementcore;
 
-import com.elementtimes.elementcore.ElementCore;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.relauncher.Side;

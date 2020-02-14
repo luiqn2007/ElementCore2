@@ -87,7 +87,7 @@ public class MachineRecipeCapture implements INBTSerializable<NBTTagCompound> {
         for (int i = 0; i < recipe.fluidOutputs.size(); i++) {
             IngredientPart<FluidStack> part = recipe.fluidOutputs.get(i);
             FluidStack fluid = part.getter.apply(recipe, input, fluids, i, part.probability);
-            fluidOutputs.set(i, fluid);
+            fluidOutputs.add(i, fluid);
             fluidOutputAmounts[i] = fluid.amount;
         }
 

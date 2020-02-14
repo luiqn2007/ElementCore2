@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.mod;
+package com.elementtimes.elementcore;
 
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;

@@ -16,8 +16,8 @@ import com.elementtimes.elementcore.api.template.tileentity.lifecycle.RecipeMach
 import com.elementtimes.elementcore.api.template.tileentity.recipe.MachineRecipeCapture;
 import com.elementtimes.elementcore.api.template.tileentity.recipe.MachineRecipeHandler;
 import com.elementtimes.elementcore.api.utils.FluidUtils;
-import com.elementtimes.elementcore.mod.net.GuiEnergyNetwork;
-import com.elementtimes.elementcore.mod.net.GuiFluidNetwork;
+import com.elementtimes.elementcore.api.common.net.GuiEnergyNetwork;
+import com.elementtimes.elementcore.api.common.net.GuiFluidNetwork;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraft.entity.player.EntityPlayer;

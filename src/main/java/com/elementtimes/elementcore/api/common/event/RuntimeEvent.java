@@ -1,8 +1,8 @@
 package com.elementtimes.elementcore.api.common.event;
 
 import com.elementtimes.elementcore.ElementCore;
+import com.elementtimes.elementcore.api.common.net.TESRRenderNetwork;
 import com.elementtimes.elementcore.api.template.tileentity.interfaces.ITileTESR;
-import com.elementtimes.elementcore.mod.net.TESRRenderNetwork;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.management.PlayerChunkMapEntry;

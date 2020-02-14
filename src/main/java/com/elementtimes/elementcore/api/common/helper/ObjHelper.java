@@ -23,13 +23,15 @@ import java.util.stream.Stream;
 public class ObjHelper {
 
     public static <T> Optional<? extends T> find(@Nonnull ECModElements elements, @Nonnull Class<? extends T> type, ASMDataTable.ASMData data) {
-        String className = data.getClassName();
-        String objectName = data.getObjectName();
-        if (objectName == null || objectName.contains(".") || className.equals(objectName)) {
-            return ECUtils.reflect.create(className, type, elements);
-        } else {
-            return findClass(elements, className).flatMap(aClass -> ECUtils.reflect.get(aClass, objectName, null, type, elements));
-        }
+        return findClass(elements, data.getClassName()).flatMap(aClass -> ECUtils.reflect.get(aClass, data.getObjectName(), null, type, elements));
+    }
+
+    /**
+     * @deprecated use {@link #find(ECModElements, Class, ASMDataTable.ASMData)}
+     */
+    @Deprecated
+    public static <T> Optional<? extends T> findOrNew(@Nonnull ECModElements elements, @Nonnull Class<? extends T> type, ASMDataTable.ASMData data) {
+        return findOrNew(elements, type, data);
     }
 
     public static Optional<CreativeTabs> findTab(@Nonnull ECModElements elements, String key) {

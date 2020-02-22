@@ -12,7 +12,6 @@ import net.minecraft.creativetab.CreativeTabs;
 public class TabLoader {
 
     public static void load(ECModElements elements) {
-        elements.warn("[COMMAND]load tab");
         ObjHelper.stream(elements, ModTab.class).forEach(data -> {
             String key = ObjHelper.getDefault(data, data.getObjectName());
             ObjHelper.findClass(elements, data.getClassName())
@@ -22,6 +21,5 @@ public class TabLoader {
                         elements.tabs.put(key, creativeTabs);
                     });
         });
-        elements.warn("[COMMAND]load tab finished");
     }
 }

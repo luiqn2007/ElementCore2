@@ -16,7 +16,6 @@ import java.util.function.Supplier;
 public class CapabilityLoader {
 
     public static void load(ECModElements elements) {
-        elements.warn("[COMMON]load capability");
         ObjHelper.stream(elements, ModCapability.class).forEach(data -> {
             Map<String, Object> info = data.getAnnotationInfo();
             Type type = (Type) info.get("type");
@@ -31,7 +30,6 @@ public class CapabilityLoader {
                 elements.capabilities.add(capability);
             }
         });
-        elements.warn("[COMMON]load capability finished");
     }
 
     public static class CapabilityData {

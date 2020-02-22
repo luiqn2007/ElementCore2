@@ -143,8 +143,7 @@ public class ForgeBusRegisterClient {
 
     @SubscribeEvent
     public void registerItemColor(ColorHandlerEvent.Item event) {
-        registerItemColorFunc(event);
-//        ECUtils.common.runWithModActive(mInitializer.container.mod, () -> registerItemColorFunc(event), event);
+        ECUtils.common.runWithModActive(elements().container.mod, () -> registerItemColorFunc(event), event);
     }
 
     private void registerItemColorFunc(ColorHandlerEvent.Item event) {
@@ -162,8 +161,7 @@ public class ForgeBusRegisterClient {
 
     @SubscribeEvent
     public void registerBlockColor(ColorHandlerEvent.Block event) {
-        registerBlockColorFunc(event);
-//        ECUtils.common.runWithModActive(mInitializer.container.mod, () -> registerBlockColorFunc(event), event);
+        ECUtils.common.runWithModActive(elements().container.mod, () -> registerBlockColorFunc(event), event);
     }
 
     private void registerBlockColorFunc(ColorHandlerEvent.Block event) {

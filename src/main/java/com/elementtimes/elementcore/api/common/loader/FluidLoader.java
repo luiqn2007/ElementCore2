@@ -21,10 +21,8 @@ import java.util.function.Supplier;
 public class FluidLoader {
 
     public static void load(ECModElements elements) {
-        elements.warn("[COMMAND]load fluid");
         loadFluid(elements);
         loadFluidBlock(elements);
-        elements.warn("[COMMAND]load fluid finished");
     }
 
     private static void loadFluid(ECModElements elements) {

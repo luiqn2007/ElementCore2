@@ -32,25 +32,28 @@ import java.util.stream.Collectors;
 public class BlockClientLoader {
 
     public static void load(ECModElements elements) {
-        elements.warn("[CLIENT]load block");
         loadBlockStateMap(elements);
         loadBlockTesr(elements);
         loadBlockColor(elements);
         loadBlockTooltips(elements);
-        elements.warn("[CLIENT]load block finished");
     }
 
     private static void loadBlockStateMap(ECModElements elements) {
         ECModElementsClient client = elements.getClientNotInit();
         ObjHelper.stream(elements, ModBlock.StateMap.class).forEach(data -> {
             ObjHelper.find(elements, Block.class, data).ifPresent(block -> {
-                elements.warn("[ModBlock.StateMap]{}", block.getRegistryName());
                 Map<String, Object> info = data.getAnnotationInfo();
                 String suffix = (String) info.get("suffix");
                 Object propertyName = info.get("name");
+                elements.warn("[ModBlock.StateMap]{} suffix={}, name={}", block.getRegistryName(), suffix, RefHelper.toString(propertyName));
                 List<?> propertyIgnore = (List<?>) info.getOrDefault("ignores", Collections.emptyList());
                 List<IProperty<?>> ignores = new ArrayList<>();
-                propertyIgnore.forEach(object -> RefHelper.get(elements, object, IProperty.class).ifPresent(ignores::add));
+                propertyIgnore.forEach(object -> {
+                    RefHelper.get(elements, object, IProperty.class).ifPresent(pi -> {
+                        ignores.add(pi);
+                        elements.warn("[ModBlock.StateMap] -> ignore {}", RefHelper.toString(object));
+                    });
+                });
                 net.minecraft.client.renderer.block.statemap.StateMap.Builder builder = new net.minecraft.client.renderer.block.statemap.StateMap.Builder()
                         .withSuffix(suffix)
                         .ignore(ignores.toArray(new IProperty<?>[0]));
@@ -60,8 +63,9 @@ public class BlockClientLoader {
         });
         ObjHelper.stream(elements, ModBlock.StateMapper.class).forEach(data -> {
             ObjHelper.find(elements, Block.class, data).ifPresent(block -> {
-                elements.warn("[ModBlock.StateMapper]{}", block.getRegistryName());
-                RefHelper.get(elements, ObjHelper.getDefault(data), IStateMapper.class).ifPresent(mapper -> {
+                Object o = ObjHelper.getDefault(data);
+                RefHelper.get(elements, o, IStateMapper.class).ifPresent(mapper -> {
+                    elements.warn("[ModBlock.StateMapper]{} {}({})", block.getRegistryName(), RefHelper.toString(o), mapper);
                     client.blockStateMaps.put(block, mapper);
                 });
             });
@@ -123,7 +127,7 @@ public class BlockClientLoader {
         ECModElementsClient client = elements.getClientNotInit();
         ObjHelper.stream(elements, ModBlock.BlockColor.class).forEach(data -> {
             ObjHelper.find(elements, Block.class, data).ifPresent(block -> {
-                int colorBlock = ObjHelper.getDefault(data);
+                int colorBlock = ObjHelper.getDefault(data, 0);
                 IBlockColor blockColor = LoaderHelperClient.getValueBlockColor(client, colorBlock);
                 if (blockColor != null) {
                     if (!client.blockColors.containsKey(blockColor)) {
@@ -131,7 +135,7 @@ public class BlockClientLoader {
                     }
                     client.blockColors.get(blockColor).add(block);
                 }
-                int colorItem = (int) data.getAnnotationInfo().getOrDefault("item", -1);
+                int colorItem = (int) data.getAnnotationInfo().getOrDefault("item", 0);
                 IItemColor itemColor = LoaderHelperClient.getValueItemColor(client, colorItem);
                 if (itemColor != null) {
                     if (!client.blockItemColors.containsKey(itemColor)) {
@@ -139,9 +143,7 @@ public class BlockClientLoader {
                     }
                     client.blockItemColors.get(itemColor).add(block);
                 }
-                elements.warn("[ModBlock.BlockColor]{}, block={}, item={}",
-                        block.getRegistryName(), blockColor == null ? "null" : Integer.toHexString(colorBlock),
-                        block.getRegistryName(), itemColor == null ? "null" : Integer.toHexString(colorItem));
+                elements.warn("[ModBlock.BlockColor]{}, block={}, item={}", block.getRegistryName(), blockColor == null ? "null" : Integer.toHexString(colorBlock), itemColor == null ? "null" : Integer.toHexString(colorItem));
             });
         });
     }

@@ -15,7 +15,6 @@ import java.util.Collections;
 public class CommandLoader {
 
     public static void load(ECModElements elements) {
-        elements.warn("[COMMON]load command");
         ObjHelper.stream(elements, ModCommand.class).forEach(data -> {
             if (!(boolean) data.getAnnotationInfo().getOrDefault("client", false)) {
                 ObjHelper.find(elements, ICommand.class, data).ifPresent(command -> {
@@ -25,6 +24,5 @@ public class CommandLoader {
                 });
             }
         });
-        elements.warn("[COMMON]load command finished");
     }
 }

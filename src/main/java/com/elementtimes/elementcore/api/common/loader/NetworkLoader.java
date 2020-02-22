@@ -14,7 +14,6 @@ import java.util.List;
 public class NetworkLoader {
 
     public static void load(ECModElements elements) {
-        elements.warn("[COMMAND]load network");
         if (elements.simpleChannel != null) {
             ObjHelper.stream(elements, ModSimpleNetwork.class).forEach(data -> {
                 ObjHelper.findClass(elements, data.getClassName()).ifPresent(aClass -> {
@@ -52,7 +51,6 @@ public class NetworkLoader {
                 });
             });
         }
-        elements.warn("[COMMAND]load network finished");
     }
 
     public static class SimpleNetwork {

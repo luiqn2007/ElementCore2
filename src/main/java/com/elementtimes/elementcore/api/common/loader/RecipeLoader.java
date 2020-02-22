@@ -30,10 +30,8 @@ import java.util.function.Supplier;
 public class RecipeLoader {
 
     public static void load(ECModElements elements) {
-        elements.warn("[COMMAND]load recipe");
         loadRecipeField(elements);
         loadRecipeMethod(elements);
-        elements.warn("[COMMAND]load recipe finished");
     }
 
     private static void loadRecipeField(ECModElements elements) {

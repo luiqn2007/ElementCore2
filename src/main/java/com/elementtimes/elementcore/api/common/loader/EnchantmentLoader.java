@@ -15,7 +15,6 @@ import java.util.Map;
 public class EnchantmentLoader {
 
     public static void load(ECModElements elements) {
-        elements.warn("[COMMAND]load enchantment");
         ObjHelper.stream(elements, ModEnchantment.class).forEach(data -> {
             ObjHelper.findClass(elements, data.getClassName()).ifPresent(clazz -> {
                 Map<String, Object> info = data.getAnnotationInfo();
@@ -23,7 +22,6 @@ public class EnchantmentLoader {
                 elements.warn("[ModEnchantment]{} rarity={}, maxLevel={}", enchantment.getName(), enchantment.getRarity(), enchantment.getMaxLevel());
             });
         });
-        elements.warn("[COMMAND]load enchantment finished");
     }
 
     public static Enchantment newEnchantment(ECModElements elements, String className, String objectName,

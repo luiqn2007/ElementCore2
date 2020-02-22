@@ -28,11 +28,9 @@ import java.util.Map;
 public class ItemClientLoader {
 
     public static void load(ECModElements elements) {
-        elements.warn("[CLIENT]load item");
         loadItemSub(elements);
         loadItemMeshDefinition(elements);
         loadItemColor(elements);
-        elements.warn("[CLIENT]load item finished");
     }
 
     private static void loadItemSub(ECModElements elements) {

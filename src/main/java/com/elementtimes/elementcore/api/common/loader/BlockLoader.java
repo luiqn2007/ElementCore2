@@ -28,12 +28,10 @@ import java.util.Map;
 public class BlockLoader {
 
     public static void load(ECModElements elements) {
-        elements.warn("[COMMON]load block");
         loadBlock(elements);
         loadBlockTileEntity(elements);
         loadBlockHarvestLevel(elements);
         loadBlockWorldGenerator(elements);
-        elements.warn("[COMMON]load block finished");
     }
 
     private static void loadBlock(ECModElements elements) {
@@ -117,9 +115,10 @@ public class BlockLoader {
             ObjHelper.find(elements, Block.class, data).ifPresent(block -> {
                 ModAnnotation.EnumHolder typeValue = (ModAnnotation.EnumHolder) data.getAnnotationInfo().get("type");
                 GenType type = typeValue == null ? GenType.Ore : GenType.valueOf(typeValue.getValue());
-                RefHelper.get(elements, ObjHelper.getDefault(data), WorldGenerator.class).ifPresent(generator -> {
-                    elements.warn("[ModBlock.WorldGenObj]{}: {}", block.getRegistryName(), generator);
-                    elements.blockWorldGen.computeIfAbsent(type, t -> new ArrayList<>()).add(generator);
+                Object aDefault = ObjHelper.getDefault(data);
+                RefHelper.get(elements, aDefault, WorldGenerator.class).ifPresent(generator -> {
+                    elements.warn("[ModBlock.WorldGenObj]{}: {}({})", block.getRegistryName(), RefHelper.toString(aDefault), generator);
+                    ECUtils.collection.computeIfAbsent(elements.blockWorldGen, type, ArrayList::new).add(generator);
                 });
             });
         });

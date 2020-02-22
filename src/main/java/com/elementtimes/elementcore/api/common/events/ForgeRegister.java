@@ -17,7 +17,6 @@ import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.registries.IForgeRegistry;
-import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -40,10 +39,6 @@ public class ForgeRegister {
 
     private ECModElements elements() {
         return mContainer.elements();
-    }
-
-    private Logger logger() {
-        return mContainer.elements;
     }
 
     @SubscribeEvent
@@ -86,14 +81,12 @@ public class ForgeRegister {
 
             elements.blockOreNames.forEach((oreName, blocks) -> {
                 for (Block block : blocks) {
-                    logger().warn("[Block]OreName: " + block.getRegistryName() + " = " + oreName);
                     OreDictionary.registerOre(oreName, block);
                 }
             });
 
             elements.itemOreNames.forEach((oreName, items) -> {
                 for (Item item : items) {
-                    logger().warn("[Item]OreName: " + item.getRegistryName() + " = " + oreName);
                     OreDictionary.registerOre(oreName, item);
                 }
             });

@@ -13,12 +13,10 @@ import java.util.Map;
 public class ItemLoader {
 
     public static void loader(ECModElements elements) {
-        elements.warn("[COMMAND]load item");
         loadItem(elements);
         loadItemRetain(elements);
         loadItemSub(elements);
         loadItemDamageable(elements);
-        elements.warn("[COMMAND]load item finished");
     }
 
     private static void loadItem(ECModElements elements) {

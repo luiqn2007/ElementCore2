@@ -11,12 +11,10 @@ import net.minecraftforge.fml.common.network.IGuiHandler;
 public class GuiLoader {
 
     public static void load(ECModElements elements) {
-        elements.warn("[COMMAND]load gui");
         ObjHelper.stream(elements, ModGui.class)
                 .forEach(data -> ObjHelper.find(elements, IGuiHandler.class, data).ifPresent(h -> {
                     elements.guiHandler = h;
                     elements.warn("[ModGui]{}", h);
                 }));
-        elements.warn("[COMMAND]load gui finished");
     }
 }

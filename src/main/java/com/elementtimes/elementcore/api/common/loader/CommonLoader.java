@@ -2,6 +2,7 @@ package com.elementtimes.elementcore.api.common.loader;
 
 import com.elementtimes.elementcore.api.annotation.tools.*;
 import com.elementtimes.elementcore.api.common.ECModElements;
+import com.elementtimes.elementcore.api.common.ECUtils;
 import com.elementtimes.elementcore.api.common.helper.ObjHelper;
 import com.elementtimes.elementcore.api.common.helper.RefHelper;
 import com.elementtimes.elementcore.api.template.interfaces.invoker.VoidInvoker;
@@ -118,7 +119,7 @@ public class CommonLoader {
                 Object aDefault = ObjHelper.getDefault(data);
                 VoidInvoker invoker = RefHelper.invoker(elements, aDefault, NonNullList.class);
                 elements.warn("[ModTabEditor]{} {}", tab, RefHelper.toString(aDefault));
-                elements.tabEditors.computeIfAbsent(tab, k -> new ArrayList<>()).add(invoker::invoke);
+                ECUtils.collection.computeIfAbsent(elements.tabEditors, tab, ArrayList::new).add(invoker::invoke);
             });
         });
     }
@@ -130,9 +131,9 @@ public class CommonLoader {
                 elements.warn("[ModOreDict]{}", entry.getRegistryName());
                 names.forEach(name -> elements.warn("[ModOreDict] -> {}", name));
                 if (entry instanceof Item) {
-                    names.forEach(name -> elements.itemOreNames.computeIfAbsent(name, n -> new ArrayList<>()).add((Item) entry));
+                    names.forEach(name -> ECUtils.collection.computeIfAbsent(elements.itemOreNames, name, ArrayList::new).add((Item) entry));
                 } else if (entry instanceof Block) {
-                    names.forEach(name -> elements.blockOreNames.computeIfAbsent(name, n -> new ArrayList<>()).add((Block) entry));
+                    names.forEach(name -> ECUtils.collection.computeIfAbsent(elements.blockOreNames, name, ArrayList::new).add((Block) entry));
                 }
             });
         });

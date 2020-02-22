@@ -346,11 +346,11 @@ public class RefHelper {
 
     public static String toString(@Nullable Object method) {
         Map<String, Object> methodMap = ObjHelper.getAnnotationMap(method);
-        if (methodMap == null && methodMap.containsKey("value")) {
+        if (methodMap != null && methodMap.containsKey("value")) {
             Object value = methodMap.get("value");
             Object name = methodMap.get("name");
             String className = value instanceof Type ? ((Type) value).getClassName() : (String) value;
-            String methodName = value instanceof Type ? ((Type) value).getClassName() : name == null ? "<init>" : (String) value;
+            String methodName = name == null ? "<init>" : name.toString();
             return className + "#" + methodName;
         }
         return "NO METHOD OR GETTER";

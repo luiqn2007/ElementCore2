@@ -18,13 +18,11 @@ import java.util.*;
 public class EntityLoader {
 
     public static void load(ECModElements elements) {
-        elements.warn("[COMMAND]load entity");
         ObjHelper.stream(elements, ModEntity.class).forEach(data -> {
             EntityData entityData = new EntityData(data.getAnnotationInfo());
             elements.warn("[ModEntity]{}", entityData);
             elements.entities.add(entityData);
         });
-        elements.warn("[COMMAND]load entity finished");
     }
 
     public static class EntityData {

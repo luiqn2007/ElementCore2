@@ -32,16 +32,19 @@ import java.util.stream.Collectors;
 public class BlockClientLoader {
 
     public static void load(ECModElements elements) {
+        elements.warn("[CLIENT]load block");
         loadBlockStateMap(elements);
         loadBlockTesr(elements);
         loadBlockColor(elements);
         loadBlockTooltips(elements);
+        elements.warn("[CLIENT]load block finished");
     }
 
     private static void loadBlockStateMap(ECModElements elements) {
         ECModElementsClient client = elements.getClientNotInit();
         ObjHelper.stream(elements, ModBlock.StateMap.class).forEach(data -> {
             ObjHelper.find(elements, Block.class, data).ifPresent(block -> {
+                elements.warn("[ModBlock.StateMap]{}", block.getRegistryName());
                 Map<String, Object> info = data.getAnnotationInfo();
                 String suffix = (String) info.get("suffix");
                 Object propertyName = info.get("name");
@@ -57,6 +60,7 @@ public class BlockClientLoader {
         });
         ObjHelper.stream(elements, ModBlock.StateMapper.class).forEach(data -> {
             ObjHelper.find(elements, Block.class, data).ifPresent(block -> {
+                elements.warn("[ModBlock.StateMapper]{}", block.getRegistryName());
                 RefHelper.get(elements, ObjHelper.getDefault(data), IStateMapper.class).ifPresent(mapper -> {
                     client.blockStateMaps.put(block, mapper);
                 });
@@ -69,6 +73,7 @@ public class BlockClientLoader {
                 .filter(te -> ITileTESR.class.isAssignableFrom(te.right))
                 .collect(Collectors.toList());
         for (ImmutablePair<String, Class<? extends TileEntity>> te : collect) {
+            elements.warn("[ITileTESR]{}", te.getRight().getName());
             elements.getClientNotInit().blockTesr.put(te.right, new BaseTESR());
         }
         ObjHelper.stream(elements, ModBlock.AnimTESR.class).forEach(data -> {
@@ -80,11 +85,13 @@ public class BlockClientLoader {
                         //noinspection
                         Optional<TileEntitySpecialRenderer> optional = ECUtils.reflect.create(animTesrClassName, TileEntitySpecialRenderer.class, elements);
                         if (optional.isPresent()) {
+                            elements.warn("[ModBlock.AnimTESR]{}({})", block.getRegistryName(), animTesrClassName);
                             elements.getClientNotInit().blockTesr.put(pair.right, optional.get());
                         } else {
                             elements.warn("Can't create AnimationTESR object");
                         }
                     } else {
+                        elements.warn("[ModBlock.AnimTESR]{}", block.getRegistryName());
                         elements.getClientNotInit().blockTesr.put(pair.right, new AnimationTESR<>());
                     }
                 } else {
@@ -100,6 +107,7 @@ public class BlockClientLoader {
                     //noinspection
                     Optional<TileEntitySpecialRenderer> optional = ECUtils.reflect.create(className, TileEntitySpecialRenderer.class, elements);
                     if (optional.isPresent()) {
+                        elements.warn("[ModBlock.TESR]{}({})", block.getRegistryName(), className);
                         elements.getClientNotInit().blockTesr.put(pair.right, optional.get());
                     } else {
                         elements.warn("Can't create TileEntitySpecialRenderer object");
@@ -115,20 +123,25 @@ public class BlockClientLoader {
         ECModElementsClient client = elements.getClientNotInit();
         ObjHelper.stream(elements, ModBlock.BlockColor.class).forEach(data -> {
             ObjHelper.find(elements, Block.class, data).ifPresent(block -> {
-                IBlockColor blockColor = LoaderHelperClient.getValueBlockColor(client, ObjHelper.getDefault(data));
+                int colorBlock = ObjHelper.getDefault(data);
+                IBlockColor blockColor = LoaderHelperClient.getValueBlockColor(client, colorBlock);
                 if (blockColor != null) {
                     if (!client.blockColors.containsKey(blockColor)) {
                         client.blockColors.put(blockColor, new ArrayList<>());
                     }
                     client.blockColors.get(blockColor).add(block);
                 }
-                IItemColor itemColor = LoaderHelperClient.getValueItemColor(client, (int) data.getAnnotationInfo().getOrDefault("item", -1));
+                int colorItem = (int) data.getAnnotationInfo().getOrDefault("item", -1);
+                IItemColor itemColor = LoaderHelperClient.getValueItemColor(client, colorItem);
                 if (itemColor != null) {
                     if (!client.blockItemColors.containsKey(itemColor)) {
                         client.blockItemColors.put(itemColor, new ArrayList<>());
                     }
                     client.blockItemColors.get(itemColor).add(block);
                 }
+                elements.warn("[ModBlock.BlockColor]{}, block={}, item={}",
+                        block.getRegistryName(), blockColor == null ? "null" : Integer.toHexString(colorBlock),
+                        block.getRegistryName(), itemColor == null ? "null" : Integer.toHexString(colorItem));
             });
         });
     }
@@ -139,6 +152,8 @@ public class BlockClientLoader {
             List<String> tooltips = ObjHelper.getDefault(data);
             if (!tooltips.isEmpty()) {
                 ObjHelper.find(elements, Block.class, data).ifPresent(block -> {
+                    elements.warn("[ModBlock.Tooltip]{}", block.getRegistryName());
+                    tooltips.forEach(s -> elements.warn("[ModBlock.Tooltip] -> {}", s));
                     client.tooltips.add((stack, strings) -> {
                         if (stack.getItem() == Item.getItemFromBlock(block)) {
                             strings.addAll(tooltips);

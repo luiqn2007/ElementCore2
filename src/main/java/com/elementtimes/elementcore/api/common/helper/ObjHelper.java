@@ -37,7 +37,7 @@ public class ObjHelper {
      */
     @Deprecated
     public static <T> Optional<? extends T> findOrNew(@Nonnull ECModElements elements, @Nonnull Class<? extends T> type, ASMDataTable.ASMData data) {
-        return findOrNew(elements, type, data);
+        return find(elements, type, data);
     }
 
     public static Optional<CreativeTabs> findTab(@Nonnull ECModElements elements, String key) {

@@ -38,12 +38,14 @@ import java.util.function.Predicate;
 public class CommonClientLoader {
 
     public static void load(ECModElements elements) {
+        elements.warn("[CLIENT]load: {}", elements.container.id());
         BlockClientLoader.load(elements);
         ItemClientLoader.load(elements);
         EntityClientLoader.load(elements);
         CommandClientLoader.load(elements);
         loadColor(elements);
         loadTooltips(elements);
+        elements.warn("[CLIENT]load finished");
     }
 
     private static void loadColor(ECModElements elements) {
@@ -55,6 +57,7 @@ public class CommonClientLoader {
                     if (itemColor != null) {
                         client.itemColors.computeIfAbsent(itemColor, k -> new ArrayList<>()).add((Item) obj);
                     }
+                    elements.warn("[ModColor]{}, item={}", ((Item) obj).getRegistryName(), itemColor);
                 } else if (obj instanceof Block) {
                     IBlockColor blockColor = LoaderHelperClient.getMethodBlockColor(elements, data.getAnnotationInfo().get("block"));
                     if (blockColor != null) {
@@ -64,6 +67,7 @@ public class CommonClientLoader {
                     if (itemColor != null) {
                         client.blockItemColors.computeIfAbsent(itemColor, k -> new ArrayList<>()).add((Block) obj);
                     }
+                    elements.warn("[ModColor]{}, block={}, item={}", ((Block) obj).getRegistryName(), blockColor, itemColor);
                 }
             });
         });
@@ -74,6 +78,7 @@ public class CommonClientLoader {
                     if (itemColor != null) {
                         client.itemColors.computeIfAbsent(itemColor, k -> new ArrayList<>()).add((Item) obj);
                     }
+                    elements.warn("[ModColorObj]{}, item={}", ((Item) obj).getRegistryName(), itemColor);
                 } else if (obj instanceof Block) {
                     IBlockColor blockColor = LoaderHelperClient.getObjectBlockColor(elements, data.getAnnotationInfo().get("block"));
                     if (blockColor != null) {
@@ -83,6 +88,7 @@ public class CommonClientLoader {
                     if (itemColor != null) {
                         client.blockItemColors.computeIfAbsent(itemColor, k -> new ArrayList<>()).add((Block) obj);
                     }
+                    elements.warn("[ModColorObj]{}, block={}, item={}", ((Block) obj).getRegistryName(), blockColor, itemColor);
                 }
             });
         });
@@ -142,6 +148,7 @@ public class CommonClientLoader {
                 p = s -> true;
             }
             VoidInvoker invoker = RefHelper.invoker(elements, ObjHelper.getDefault(data));
+            elements.warn("[ModTooltip]Tooltip: {}", o);
             client.tooltips.add((stack, strings) -> {
                 if (stack != null && p.test(stack)) {
                     invoker.invoke(stack, strings);

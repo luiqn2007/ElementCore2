@@ -2,7 +2,7 @@ package com.elementtimes.elementcore.api.common;
 
 import com.elementtimes.elementcore.api.annotation.enums.GenType;
 import com.elementtimes.elementcore.api.annotation.enums.LoadState;
-import com.elementtimes.elementcore.api.common.event.*;
+import com.elementtimes.elementcore.api.common.events.*;
 import com.elementtimes.elementcore.api.common.loader.CapabilityLoader;
 import com.elementtimes.elementcore.api.common.loader.CommonLoader;
 import com.elementtimes.elementcore.api.common.loader.EntityLoader;
@@ -176,7 +176,7 @@ public class ECModElements extends AbstractLogger {
 
         private Table<LoadState, Class<? extends Annotation>, BiConsumer<ASMDataTable.ASMData, ECModContainer>> customAnnotation = HashBasedTable.create();
         private Set<String> packages = new LinkedHashSet<>();
-        private boolean debugEnable = true, netSimple = true, netEvent = false;
+        private boolean debugEnable = false, netSimple = true, netEvent = false;
         private Logger logger = null;
 
         public Builder enableDebugMessage() {
@@ -255,6 +255,10 @@ public class ECModElements extends AbstractLogger {
 
     @SideOnly(Side.CLIENT)
     public com.elementtimes.elementcore.api.client.ECModElementsClient getClientNotInit() {
+        if (!isLoaded) {
+            CommonLoader.load(this);
+            isLoaded = true;
+        }
         return (com.elementtimes.elementcore.api.client.ECModElementsClient) clientElement;
     }
 

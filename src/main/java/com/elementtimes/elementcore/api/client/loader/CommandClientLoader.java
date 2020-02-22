@@ -11,10 +11,15 @@ import net.minecraft.command.ICommand;
 public class CommandClientLoader {
 
     public static void load(ECModElements elements) {
+        elements.warn("[CLIENT]load command");
         ObjHelper.stream(elements, ModCommand.class).forEach(data -> {
             if ((boolean) data.getAnnotationInfo().getOrDefault("client", false)) {
-                ObjHelper.find(elements, ICommand.class, data).ifPresent(elements.getClientNotInit().commands::add);
+                ObjHelper.find(elements, ICommand.class, data).ifPresent(command -> {
+                    elements.warn("[ModCommand](Client){}", command.getName());
+                    elements.getClientNotInit().commands.add(command);
+                });
             }
         });
+        elements.warn("[CLIENT]load command finished");
     }
 }

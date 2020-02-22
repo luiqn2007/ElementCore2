@@ -15,11 +15,14 @@ import net.minecraft.entity.Entity;
 public class EntityClientLoader {
 
     public static void load(ECModElements elements) {
+        elements.warn("[CLIENT]load entity");
         ObjHelper.stream(elements, ModEntity.class).forEach(data -> {
             ObjHelper.<Entity>findClass(elements, data.getClassName()).ifPresent(entityClass -> {
+                elements.warn("[ModEntity]render: {}", entityClass.getName());
                 Invoker<Render> render = RefHelper.invoker(elements, data.getAnnotationInfo().get("render"), Invoker.empty(), RenderManager.class);
                 elements.getClientNotInit().entityRenders.put(entityClass, render::invoke);
             });
         });
+        elements.warn("[CLIENT]load entity finished");
     }
 }

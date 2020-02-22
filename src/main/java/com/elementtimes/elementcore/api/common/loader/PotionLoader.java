@@ -16,13 +16,16 @@ import java.util.Map;
 public class PotionLoader {
 
     public static void load(ECModElements elements) {
+        elements.warn("[COMMAND]load potion");
         ObjHelper.stream(elements, ModPotion.class).forEach(data -> {
             ObjHelper.findClass(elements, data.getClassName()).ifPresent(aClass -> {
                 Map<String, Object> info = data.getAnnotationInfo();
                 String name = (String) info.get("name");
-                newPotion(elements, data.getClassName(), data.getObjectName(), ObjHelper.getDefault(data), name);
+                Potion potion = newPotion(elements, data.getClassName(), data.getObjectName(), ObjHelper.getDefault(data), name);
+                elements.warn("[ModPotion]{}{}", potion.getName(), potion.isBadEffect() ? "(BAD)" : "");
             });
         });
+        elements.warn("[COMMAND]load potion finished");
     }
 
     public static Potion newPotion(ECModElements elements, String className, String objectName,

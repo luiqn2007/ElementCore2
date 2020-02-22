@@ -10,10 +10,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.EntityEntryBuilder;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author luqin2007
@@ -21,9 +18,13 @@ import java.util.Map;
 public class EntityLoader {
 
     public static void load(ECModElements elements) {
+        elements.warn("[COMMAND]load entity");
         ObjHelper.stream(elements, ModEntity.class).forEach(data -> {
-            elements.entities.add(new EntityData(data.getAnnotationInfo()));
+            EntityData entityData = new EntityData(data.getAnnotationInfo());
+            elements.warn("[ModEntity]{}", entityData);
+            elements.entities.add(entityData);
         });
+        elements.warn("[COMMAND]load entity finished");
     }
 
     public static class EntityData {
@@ -105,6 +106,22 @@ public class EntityLoader {
                 mEntry = builder.build();
             }
             return mEntry;
+        }
+
+        @Override
+        public String toString() {
+            String egg = hasEgg ? "eggColorPrimary=" + eggColorPrimary + ", eggColorSecondary=" + eggColorSecondary : "No Egg";
+            String spawn = canSpawn ? "spawnType=" + spawnType + ", spawnWeight=" + spawnWeight + ", spawnCount=[" + spawnMin + ", " + spawnMax + "], biomeIds=" + Arrays.toString(biomeIds.toArray(new String[0])) : "No Spawn";
+            return "EntityData{" +
+                    "network=" + network +
+                    ", id=" + id +
+                    ", name=" + name +
+                    ", trackerRange=" + trackerRange +
+                    ", updateFrequency=" + updateFrequency +
+                    ", sendVelocityUpdate=" + sendVelocityUpdate +
+                    ", \n\tegg=" + egg +
+                    ", \n\tspawn=" + spawn +
+                    '}';
         }
     }
 }

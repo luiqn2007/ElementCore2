@@ -14,7 +14,7 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 public class CommonProxy {
 
     public void preInit(FMLPreInitializationEvent event) {
-        ElementCore.instance().container = ECModElements.builder().disableDebugMessage().build(event);
+        ElementCore.instance().container = ECModElements.builder().build(event);
     }
 
     public void init(FMLInitializationEvent event) {

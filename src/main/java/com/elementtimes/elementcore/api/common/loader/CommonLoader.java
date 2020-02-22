@@ -23,6 +23,7 @@ import java.util.Map;
 public class CommonLoader {
 
     public static void load(ECModElements elements) {
+        elements.warn("[COMMON]load " + elements.container.id());
         loadConfig(elements);
         TabLoader.load(elements);
         CapabilityLoader.load(elements);
@@ -40,6 +41,7 @@ public class CommonLoader {
         loadStaticFunction(elements);
         loadBurnTime(elements);
         loadOreName(elements);
+        elements.warn("[COMMON]load finished");
     }
 
     private static void loadConfig(ECModElements elements) {
@@ -51,6 +53,7 @@ public class CommonLoader {
             if (!elements.blockB3d && (boolean) info.getOrDefault("useB3D", false)) {
                 elements.blockB3d = true;
             }
+            elements.warn("[ModConfig]obj={}, b3d={}", elements.blockObj, elements.blockB3d);
         });
     }
 
@@ -69,6 +72,7 @@ public class CommonLoader {
                     }
                 } catch (NoSuchMethodException ignored) { }
                 if (method != null) {
+                    elements.warn("[ModInvokeStatic]{}#{}", data.getClassName(), value);
                     elements.staticFunction.add(method);
                 } else {
                     elements.warn("Skip Function: {} from {}", value, data.getClassName());
@@ -86,6 +90,8 @@ public class CommonLoader {
                 int defValue = (int) info.get("value");
                 List<HashMap<String, Object>> subTimes = (List<HashMap<String, Object>>) info.get("sub");
                 boolean hasSubTime = subTimes != null && !subTimes.isEmpty();
+                Object name = o instanceof IForgeRegistryEntry ? ((IForgeRegistryEntry) o).getRegistryName() : ((Fluid) o).getName();
+                elements.warn("[ModBurnTime]{} default={}, subCount={}", name, defValue, subTimes.size());
                 elements.burnTimes.put(o, stack -> {
                     if (hasSubTime) {
                         for (HashMap<String, Object> map : subTimes) {
@@ -109,7 +115,9 @@ public class CommonLoader {
     private static void loadTabEditor(ECModElements elements) {
         ObjHelper.stream(elements, ModTabEditor.class).forEach(data -> {
             ObjHelper.find(elements, CreativeTabs.class, data).ifPresent(tab -> {
-                VoidInvoker invoker = RefHelper.invoker(elements, ObjHelper.getDefault(data), NonNullList.class);
+                Object aDefault = ObjHelper.getDefault(data);
+                VoidInvoker invoker = RefHelper.invoker(elements, aDefault, NonNullList.class);
+                elements.warn("[ModTabEditor]{} {}", tab, RefHelper.toString(aDefault));
                 elements.tabEditors.computeIfAbsent(tab, k -> new ArrayList<>()).add(invoker::invoke);
             });
         });
@@ -119,6 +127,8 @@ public class CommonLoader {
         ObjHelper.stream(elements, ModOreDict.class).forEach(data -> {
             ObjHelper.find(elements, IForgeRegistryEntry.class, data).ifPresent(entry -> {
                 List<String> names = ObjHelper.getDefault(data);
+                elements.warn("[ModOreDict]{}", entry.getRegistryName());
+                names.forEach(name -> elements.warn("[ModOreDict] -> {}", name));
                 if (entry instanceof Item) {
                     names.forEach(name -> elements.itemOreNames.computeIfAbsent(name, n -> new ArrayList<>()).add((Item) entry));
                 } else if (entry instanceof Block) {

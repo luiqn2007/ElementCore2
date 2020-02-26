@@ -1,6 +1,5 @@
 package com.elementtimes.elementcore;
 
-import com.elementtimes.elementcore.ElementCore;
 import com.elementtimes.elementcore.api.common.ECModContainer;
 import com.elementtimes.elementcore.api.common.ECModElements;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;

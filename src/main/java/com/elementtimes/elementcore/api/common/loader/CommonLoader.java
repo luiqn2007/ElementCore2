@@ -5,12 +5,9 @@ import com.elementtimes.elementcore.api.common.ECModElements;
 import com.elementtimes.elementcore.api.common.ECUtils;
 import com.elementtimes.elementcore.api.common.helper.ObjHelper;
 import com.elementtimes.elementcore.api.common.helper.RefHelper;
-import com.elementtimes.elementcore.api.template.interfaces.invoker.VoidInvoker;
 import net.minecraft.block.Block;
-import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import org.apache.commons.lang3.ArrayUtils;
@@ -38,7 +35,6 @@ public class CommonLoader {
         NetworkLoader.load(elements);
         CommandLoader.load(elements);
         GuiLoader.load(elements);
-        loadTabEditor(elements);
         loadStaticFunction(elements);
         loadBurnTime(elements);
         loadOreName(elements);
@@ -109,17 +105,6 @@ public class CommonLoader {
                     }
                     return defValue;
                 });
-            });
-        });
-    }
-
-    private static void loadTabEditor(ECModElements elements) {
-        ObjHelper.stream(elements, ModTabEditor.class).forEach(data -> {
-            ObjHelper.find(elements, CreativeTabs.class, data).ifPresent(tab -> {
-                Object aDefault = ObjHelper.getDefault(data);
-                VoidInvoker invoker = RefHelper.invoker(elements, aDefault, NonNullList.class);
-                elements.warn("[ModTabEditor]{} {}", tab, RefHelper.toString(aDefault));
-                ECUtils.collection.computeIfAbsent(elements.tabEditors, tab, ArrayList::new).add(invoker::invoke);
             });
         });
     }

@@ -2,11 +2,11 @@ package com.elementtimes.elementcore.api.common;
 
 import com.elementtimes.elementcore.api.annotation.enums.GenType;
 import com.elementtimes.elementcore.api.annotation.enums.LoadState;
-import com.elementtimes.elementcore.api.common.events.*;
-import com.elementtimes.elementcore.api.common.loader.CapabilityLoader;
-import com.elementtimes.elementcore.api.common.loader.CommonLoader;
-import com.elementtimes.elementcore.api.common.loader.EntityLoader;
-import com.elementtimes.elementcore.api.common.loader.NetworkLoader;
+import com.elementtimes.elementcore.api.common.events.FmlRegister;
+import com.elementtimes.elementcore.api.common.events.ForgeRegister;
+import com.elementtimes.elementcore.api.common.events.OreBusRegister;
+import com.elementtimes.elementcore.api.common.events.TerrainBusRegister;
+import com.elementtimes.elementcore.api.common.loader.*;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import net.minecraft.block.Block;
@@ -111,6 +111,7 @@ public class ECModElements extends AbstractLogger {
      * Enchantment
      */
     public final List<Enchantment> enchantments = new ArrayList<>();
+    public final List<EnchantmentLoader.EnchantmentBookWrapper> enchantmentBooks = new ArrayList<>();
 
     /**
      * Potion
@@ -137,6 +138,7 @@ public class ECModElements extends AbstractLogger {
      */
     public final Map<Object, ToIntFunction<ItemStack>> burnTimes = new HashMap<>();
     public final Map<CreativeTabs, List<Consumer<NonNullList<ItemStack>>>> tabEditors = new HashMap<>();
+    public final List<BiConsumer<CreativeTabs, NonNullList<ItemStack>>> tabEditorFuns = new ArrayList<>();
     public final List<Method> staticFunction = new ArrayList<>();
     public Table<LoadState, Class<? extends Annotation>, BiConsumer<ASMDataTable.ASMData, ECModContainer>> customAnnotation;
     public boolean blockB3d = false, blockObj = false;

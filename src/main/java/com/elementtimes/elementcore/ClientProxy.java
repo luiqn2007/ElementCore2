@@ -1,7 +1,6 @@
 package com.elementtimes.elementcore;
 
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -16,7 +15,4 @@ public class ClientProxy extends CommonProxy {
         super.preInit(event);
         ElementCore.instance().container.elements().getClientElements().fmlEventRegister.onPreInit(event);
     }
-
-    @Override
-    public void onServerStart(FMLServerStartingEvent event) { }
 }

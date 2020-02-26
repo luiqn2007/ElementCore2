@@ -146,7 +146,7 @@ public class FluidMachineLifecycle implements IMachineLifecycle {
                 .concat(mInputs.values().stream(), mOutputs.values().stream())
                 .mapToInt(ints -> ints[0])
                 .toArray();
-        mMachine.markBucketInput(slots);
+        mMachine.markBucketInputAndFix(slots.length, slots);
     }
 
     @Override

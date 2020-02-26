@@ -44,6 +44,10 @@ public class BlockTileBase<T extends TileEntity> extends BlockContainer implemen
         this(entityClass, 0, mod);
     }
 
+    public BlockTileBase(Class<T> entityClass) {
+        this(entityClass, 0, null);
+    }
+
     @Nullable
     @Override
     public TileEntity createNewTileEntity(@SuppressWarnings("NullableProblems") World worldIn, int meta) {
@@ -85,33 +89,17 @@ public class BlockTileBase<T extends TileEntity> extends BlockContainer implemen
     public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state,
                                     EntityPlayer playerIn, EnumHand hand, EnumFacing facing,
                                     float hitX, float hitY, float hitZ) {
-        if (!worldIn.isRemote) {
-            TileEntity e = worldIn.getTileEntity(pos);
-            if (e instanceof IGuiProvider) {
-                playerIn.openGui(mMod, ((IGuiProvider) e).getGuiId(), worldIn, pos.getX(), pos.getY(), pos.getZ());
-            } else {
-                playerIn.openGui(mMod, mGui, worldIn, pos.getX(), pos.getY(), pos.getZ());
+        if (mMod != null) {
+            if (!worldIn.isRemote) {
+                TileEntity e = worldIn.getTileEntity(pos);
+                if (e instanceof IGuiProvider) {
+                    playerIn.openGui(mMod, ((IGuiProvider) e).getGuiId(), worldIn, pos.getX(), pos.getY(), pos.getZ());
+                } else {
+                    playerIn.openGui(mMod, mGui, worldIn, pos.getX(), pos.getY(), pos.getZ());
+                }
             }
+            return true;
         }
-        return true;
+        return false;
     }
-
-    @Override
-    public void onBlockPlacedBy(World worldIn, BlockPos pos, IBlockState state,
-                                EntityLivingBase placer, ItemStack stack) {
-        super.onBlockPlacedBy(worldIn, pos, state, placer, stack);
-        IDismantleBlock.super.onBlockPlacedBy(worldIn, pos, state, placer, stack);
-    }
-
-//    @Override
-//    @SuppressWarnings("NullableProblems")
-//    // 不知道要不要删除。使用这个结果是无法用稿子敲下来
-//    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, ItemStack stack) {
-//        if (worldIn.isRemote) return;
-//        worldIn.setBlockToAir(pos);
-//        TileEntity tile = worldIn.getTileEntity(pos);
-//        if (tile != null) {
-//            worldIn.removeTileEntity(pos);
-//        }
-//    }
 }

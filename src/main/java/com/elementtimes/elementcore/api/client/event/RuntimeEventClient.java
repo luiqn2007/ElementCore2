@@ -27,6 +27,5 @@ public class RuntimeEventClient {
         ItemStack itemStack = event.getItemStack();
         List<String> toolTip = event.getToolTip();
         mContainer.elements().getClientElements().tooltips.forEach(consumer -> consumer.accept(itemStack, toolTip));
-        String s = "use for debug";
     }
 }

@@ -345,6 +345,16 @@ public abstract class BaseTileEntity extends TileEntity implements
         }
     }
 
+    public void markBucketInputAndFix(int itemOutputDelta, int... slots) {
+        markBucketInput(slots);
+        MachineRecipeHandler recipes = getRecipes();
+        fixRecipeCount(recipes.inputItemCount - slots.length, recipes.outputItemCount - itemOutputDelta, recipes.inputFluidCount, recipes.outputFluidCount);
+    }
+
+    public void fixRecipeCount(int inputItem, int outputItem, int inputFluid, int outputFluid) {
+        getRecipes().resetSize(inputItem, outputItem, inputFluid, outputFluid);
+    }
+
     private SideHandlerType getIOType(@Nullable EnumFacing facing, boolean hasInput, boolean hasOutput) {
         if (facing == EnumFacing.UP) {
             return hasInput ? SideHandlerType.INPUT : SideHandlerType.ALL;

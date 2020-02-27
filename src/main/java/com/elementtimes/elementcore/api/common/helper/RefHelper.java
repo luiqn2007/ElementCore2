@@ -293,8 +293,27 @@ public class RefHelper {
         invoker(elements, method, argTypes).invoke(args);
     }
 
+    public static VoidInvoker invokerNullable(@Nonnull ECModElements elements, @Nullable Object method, Class<?>... argTypes) {
+        return invoker(elements, method, null,
+                (m) -> (params) -> {
+                    try {
+                        m.invoke(null, params);
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                },
+                (holder, m) -> (params) -> {
+                    try {
+                        m.invoke(holder.get(), params);
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                },
+                (c) -> (params) -> {}, argTypes);
+    }
+
     private static <T> T invoker(@Nonnull ECModElements elements, @Nullable Object method,
-                                 T defValue, Function<java.lang.reflect.Method, T> invokeStatic,
+                                 @Nullable T defValue, Function<java.lang.reflect.Method, T> invokeStatic,
                                  BiFunction<Supplier<Object>, java.lang.reflect.Method, T> invoke, Function<Constructor<?>, T> newInstance,
                                  Class<?>... argTypes) {
         Map<String, Object> methodMap = ObjHelper.getAnnotationMap(method);

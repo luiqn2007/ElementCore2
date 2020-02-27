@@ -44,6 +44,7 @@ public class CommonClientLoader {
         ItemClientLoader.load(elements);
         EntityClientLoader.load(elements);
         CommandClientLoader.load(elements);
+        KeyClientLoader.load(elements);
         loadColor(elements);
         loadTooltips(elements);
         elements.warn("[CLIENT]load finished");

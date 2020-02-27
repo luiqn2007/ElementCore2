@@ -51,7 +51,7 @@ public class TabLoader {
             String className = data.getClassName();
             ObjHelper.findClass(elements, className).ifPresent(aClass -> {
                 String objectName = data.getObjectName();
-                String methodName = objectName.substring(0, objectName.indexOf("()"));
+                String methodName = objectName.substring(0, objectName.indexOf("("));
                 Method method;
                 try {
                     method = ReflectionHelper.findMethod(aClass, methodName, methodName, CreativeTabs.class, NonNullList.class);

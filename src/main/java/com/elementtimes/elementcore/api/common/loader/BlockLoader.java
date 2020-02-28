@@ -55,7 +55,7 @@ public class BlockLoader {
                 String name = (String) data.getAnnotationInfo().getOrDefault("name", className.substring(className.indexOf(".")));
                 Type type = ObjHelper.getDefault(data);
                 ObjHelper.<TileEntity>findClass(elements, type.getClassName()).ifPresent(aClass -> {
-                    elements.warn("[ModBlock.TileEntity]{} for {}", aClass.getName(), block.getRegistryName());
+                    elements.warn("[ModBlock.TileEntity]{}", aClass.getName());
                     elements.blockTileEntitiesNull.put(name, aClass);
                 });
             } else {
@@ -70,7 +70,7 @@ public class BlockLoader {
                 Type type = ObjHelper.getDefault(data);
                 ObjHelper.<TileEntity>findClass(elements, type.getClassName())
                         .ifPresent(aClass -> {
-                            elements.warn("[ModBlock.TileEntity]{}", aClass.getName());
+                            elements.warn("[ModBlock.TileEntity]{} for {}", aClass.getName(), block.getRegistryName());
                             elements.blockTileEntities.put(block, ImmutablePair.of(name, aClass));
                         });
             }

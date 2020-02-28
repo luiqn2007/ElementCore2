@@ -5,7 +5,6 @@ import com.elementtimes.elementcore.api.annotation.part.Getter;
 import com.elementtimes.elementcore.api.common.net.handler.GuiFluidHandler;
 import com.elementtimes.elementcore.api.template.tileentity.SideHandlerType;
 import com.elementtimes.elementcore.api.template.tileentity.lifecycle.HandlerInfoMachineLifecycle;
-import com.elementtimes.elementcore.api.utils.FluidUtils;
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
@@ -76,8 +75,12 @@ public class GuiFluidNetwork implements IMessage {
                 Int2IntMap rCapabilities = new Int2IntArrayMap(count);
                 for (int i = 0; i < count; i++) {
                     int slot = buf.readInt();
-                    FluidStack fluid = FluidStack.loadFluidStackFromNBT(ByteBufUtils.readTag(buf));
-                    rFluids.put(slot, fluid);
+                    NBTTagCompound compound = ByteBufUtils.readTag(buf);
+                    if (compound == null || compound.hasNoTags()) {
+                        rFluids.put(slot, null);
+                    } else {
+                        rFluids.put(slot, FluidStack.loadFluidStackFromNBT(compound));
+                    }
                     rCapabilities.put(slot, buf.readInt());
                 }
                 fluids.put(type, rFluids);
@@ -100,9 +103,10 @@ public class GuiFluidNetwork implements IMessage {
                 buf.writeInt(slot);
                 FluidStack fluid = rFluids.get(slot);
                 if (fluid == null) {
-                    fluid = FluidUtils.EMPTY;
+                    ByteBufUtils.writeTag(buf, new NBTTagCompound());
+                } else {
+                    ByteBufUtils.writeTag(buf, fluid.writeToNBT(new NBTTagCompound()));
                 }
-                ByteBufUtils.writeTag(buf, fluid.writeToNBT(new NBTTagCompound()));
                 buf.writeInt(rCapabilities.get(slot));
             });
         });

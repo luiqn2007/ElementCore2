@@ -219,7 +219,7 @@ public abstract class BaseTileEntity extends TileEntity implements
         List<ItemStack> list = ECUtils.item.toList(itemHandler, getRecipeSlotIgnore());
         ItemStack backup = list.get(slot);
         list.set(slot, stack);
-        boolean valid = getRecipes().acceptInput(list, ECUtils.fluid.toListIndexed(getTanks(SideHandlerType.INPUT), FluidUtils.EMPTY));
+        boolean valid = getRecipes().acceptInput(list, ECUtils.fluid.toListIndexed(getTanks(SideHandlerType.INPUT)));
         list.set(slot, backup);
         return valid;
     }
@@ -268,7 +268,7 @@ public abstract class BaseTileEntity extends TileEntity implements
     }
     @Override
     public boolean isFillValid(int slot, FluidStack fluidStack) {
-        List<FluidStack> fluids = ECUtils.fluid.toListIndexed(getTanks(SideHandlerType.INPUT), FluidUtils.EMPTY);
+        List<FluidStack> fluids = ECUtils.fluid.toListIndexed(getTanks(SideHandlerType.INPUT));
         fluids.set(slot, fluidStack);
         return getRecipes().acceptInput(ECUtils.item.toList(getItemHandler(SideHandlerType.INPUT), getRecipeSlotIgnore()), fluids);
     }

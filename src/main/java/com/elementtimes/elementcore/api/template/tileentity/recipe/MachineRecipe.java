@@ -62,7 +62,8 @@ public class MachineRecipe {
                 }
             }
             if (i < inputFluidSize) {
-                if (fluids.get(i) != null && fluids.get(i).amount > 0 && !fluidInputs.get(i).accept.apply(this, i, input, fluids, fluids.get(i))) {
+                FluidStack fs = fluids.get(i);
+                if (fs != null && fs.amount > 0 && !fluidInputs.get(i).accept.apply(this, i, input, fluids, fs)) {
                     result = false;
                     break;
                 }

@@ -152,7 +152,7 @@ public class FluidMachineLifecycle implements IMachineLifecycle {
     @Override
     public void onTickStart() {
         insertEmptyContainers();
-        List<FluidStack> inputFluidList = ECUtils.fluid.toListIndexed(inputFluids, FluidUtils.EMPTY);
+        List<FluidStack> inputFluidList = ECUtils.fluid.toListIndexed(inputFluids);
         mInputs.int2ObjectEntrySet().forEach(entry -> {
             int slot = entry.getIntKey();
             int bucketInput = entry.getValue()[0];
@@ -254,7 +254,7 @@ public class FluidMachineLifecycle implements IMachineLifecycle {
     @Override
     public void onTickFinish() {
         insertFullContainers();
-        List<FluidStack> outputFluidList = ECUtils.fluid.toListIndexed(outputFluids, FluidUtils.EMPTY);
+        List<FluidStack> outputFluidList = ECUtils.fluid.toListIndexed(outputFluids);
         mOutputs.int2ObjectEntrySet().forEach(entry -> {
             int slot = entry.getIntKey();
             int bucketInput = entry.getValue()[0];

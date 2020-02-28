@@ -2,7 +2,6 @@ package com.elementtimes.elementcore.api.template.tileentity.recipe;
 
 import com.elementtimes.elementcore.api.common.ECUtils;
 import com.elementtimes.elementcore.api.template.interfaces.Function5;
-import com.elementtimes.elementcore.api.utils.FluidUtils;
 import net.minecraft.block.Block;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
@@ -257,6 +256,6 @@ public class IngredientPart<T> {
     public static IngredientPart<FluidStack> EMPTY_FLUID = new IngredientPart<>(
             (recipe, slot, inputItems, inputFluids, input) -> true,
             (recipe, slot, inputItems, inputFluids, input) -> false,
-            (recipe, items, fluids, slot, probability) -> FluidUtils.EMPTY,
-            () -> Collections.singletonList(FluidUtils.EMPTY));
+            (recipe, items, fluids, slot, probability) -> null,
+            Collections::emptyList);
 }

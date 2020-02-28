@@ -134,7 +134,7 @@ public class WorldReplaceMachineLifecycle implements IMachineLifecycle {
             int size = capture.fluidOutputs.size();
             if (size <= slot) {
                 for (; size <= slot; size++) {
-                    capture.fluidOutputs.add(size, FluidUtils.EMPTY);
+                    capture.fluidOutputs.add(size, null);
                 }
             }
             capture.fluidOutputs.set(slot, fluid);

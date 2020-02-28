@@ -9,6 +9,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionType;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
@@ -119,6 +120,16 @@ public class ForgeRegister {
             IForgeRegistry<Potion> registry = event.getRegistry();
             for (Potion potion : elements().potions) {
                 registry.register(potion);
+            }
+        }, event);
+    }
+
+    @SubscribeEvent
+    public void registerPotionType(RegistryEvent.Register<PotionType> event) {
+        ECUtils.common.runWithModActive(mContainer.mod, () -> {
+            IForgeRegistry<PotionType> registry = event.getRegistry();
+            for (PotionType potionType : elements().potionTypes) {
+                registry.register(potionType);
             }
         }, event);
     }

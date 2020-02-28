@@ -17,6 +17,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.client.registry.IRenderFactory;
 import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -54,6 +55,7 @@ public class ECModElementsClient {
 
     // Item
     public final Map<Item, ItemMeshDefinition> itemMeshDefinition = new HashMap<>();
+    public final Map<Item, ResourceLocation[]> itemMeshDefinitionAll = new HashMap<>();
     public final Map<IItemColor, List<Item>> itemColors = new HashMap<>();
     public final Map<Item, ArrayList<ItemClientLoader.SubModel>> itemSubModel = new HashMap<>();
 

@@ -22,6 +22,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.potion.PotionType;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.gen.feature.WorldGenerator;
@@ -125,6 +127,8 @@ public class ECModElements extends AbstractLogger {
      * Potion
      */
     public final List<Potion> potions = new ArrayList<>();
+    public final List<PotionType> potionTypes = new ArrayList<>();
+    public final List<PotionLoader.PotionBottle> potionBottles = new ArrayList<>();
 
     /**
      * GUI

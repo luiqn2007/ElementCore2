@@ -69,7 +69,7 @@ public class ObjHelper {
         Class<? extends T> clazz = (Class<? extends T>) elements.classes.get(className);
         if (clazz == null) {
             try {
-                clazz = (Class<? extends T>) Class.forName(className);
+                clazz = (Class<? extends T>) Thread.currentThread().getContextClassLoader().loadClass(className);
             } catch (ClassNotFoundException e) {
                 elements.warn("Can't find class: {}", className);
             }

@@ -17,4 +17,11 @@ public class TabEditor {
             container.elements.enchantmentBooks.forEach(wrapper -> wrapper.apply(tab, items));
         });
     }
+
+    @ModTabEditorFunc
+    public static void onPotionBottleAdd(CreativeTabs tabs, NonNullList<ItemStack> items) {
+        ECModContainer.MODS.values().forEach(container -> {
+            container.elements.potionBottles.forEach(wrapper -> wrapper.apply(tabs, items));
+        });
+    }
 }

@@ -88,7 +88,7 @@ public class CommonLoader {
                 List<HashMap<String, Object>> subTimes = (List<HashMap<String, Object>>) info.get("sub");
                 boolean hasSubTime = subTimes != null && !subTimes.isEmpty();
                 Object name = o instanceof IForgeRegistryEntry ? ((IForgeRegistryEntry) o).getRegistryName() : ((Fluid) o).getName();
-                elements.warn("[ModBurnTime]{} default={}, subCount={}", name, defValue, subTimes.size());
+                elements.warn("[ModBurnTime]{} default={}, subCount={}", name, defValue, subTimes == null ? 0 : subTimes.size());
                 elements.burnTimes.put(o, stack -> {
                     if (hasSubTime) {
                         for (HashMap<String, Object> map : subTimes) {

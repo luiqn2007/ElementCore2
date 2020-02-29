@@ -52,8 +52,8 @@ public class MachineRecipe {
         int size = Math.max(inputs.size(), fluidInputs.size());
         int inputItemSize = input.size();
         int inputFluidSize = fluids.size();
-        size = Math.min(size, inputItemSize);
-        size = Math.min(size, inputFluidSize);
+        size = Math.max(size, inputItemSize);
+        size = Math.max(size, inputFluidSize);
         for (int i = 0; i < size; i++) {
             if (i < inputItemSize) {
                 if (!input.get(i).isEmpty() && !inputs.get(i).accept.apply(this, i, input, fluids, input.get(i))) {

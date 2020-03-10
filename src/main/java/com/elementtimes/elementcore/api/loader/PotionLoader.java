@@ -1,68 +1,47 @@
 package com.elementtimes.elementcore.api.loader;
 
 import com.elementtimes.elementcore.api.ECModElements;
-import com.elementtimes.elementcore.api.ECUtils;
-import com.elementtimes.elementcore.api.LoaderHelper;
-import com.elementtimes.elementcore.api.annotation.ModEffect;
 import com.elementtimes.elementcore.api.annotation.ModPotion;
-import net.minecraft.potion.Effect;
+import com.elementtimes.elementcore.api.annotation.part.Parts;
+import com.elementtimes.elementcore.api.helper.FindOptions;
+import com.elementtimes.elementcore.api.helper.ObjHelper;
+import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Potion;
 
-import java.util.ArrayList;
+import java.lang.annotation.ElementType;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
+/**
+ * @author luqin2007
+ */
 public class PotionLoader {
 
-    private boolean isPotionLoaded = false;
-    private boolean isEffectLeaded = false;
-    private ECModElements mElements;
-
-    List<Potion> potions = new ArrayList<>();
-    List<Effect> effects = new ArrayList<>();
-
-    public PotionLoader(ECModElements elements) {
-        mElements = elements;
+    public static void load(ECModElements elements) {
+        loadPotion(elements);
     }
 
-    public List<Potion> potions() {
-        if (!isPotionLoaded) {
-            mElements.elements.load();
-            loadPotions();
-        }
-        return potions;
-    }
-
-    private void loadPotions() {
-        LoaderHelper.stream(mElements, ModPotion.class).forEach(data -> {
-            LoaderHelper.loadClass(mElements, data.getClassType().getClassName()).ifPresent(aClass -> {
-                String memberName = data.getMemberName();
-                ECUtils.reflect.getField(aClass, memberName, null, Potion.class, mElements.logger).ifPresent(potion -> {
-                    LoaderHelper.regName(mElements, potion, LoaderHelper.getDefault(data, memberName));
-                    potions.add(potion);
-                });
+    private static void loadPotion(ECModElements elements) {
+        ObjHelper.stream(elements, ModPotion.class).forEach(data -> {
+            FindOptions options = new FindOptions().withReturns(Potion.class).withTypes(ElementType.FIELD, ElementType.TYPE)
+                    .addParameterObjects(() -> {
+                        Map<String, Object> map = data.getAnnotationData();
+                        String name1 = (String) map.getOrDefault("name", ObjHelper.getMemberName(data));
+                        List<Map<String, Object>> effectMaps = (List<Map<String, Object>>) map.getOrDefault("effects", Collections.emptyList());
+                        EffectInstance[] effects = effectMaps.stream()
+                                .map(em -> Parts.effectInstance(em, elements))
+                                .filter(Objects::nonNull)
+                                .toArray(EffectInstance[]::new);
+                        return new Object[] {name1, effects};
+                    });
+            ObjHelper.find(elements, data, options).ifPresent(obj -> {
+                Potion potion = (Potion) obj;
+                String name = ObjHelper.getDefault(data);
+                ObjHelper.setRegisterName(potion, name, data, elements);
+                elements.potions.add(potion);
             });
         });
-        isPotionLoaded = true;
-    }
-
-    public List<Effect> effects() {
-        if (!isEffectLeaded) {
-            mElements.elements.load();
-            loadEffects();
-        }
-        return effects;
-    }
-
-    private void loadEffects() {
-        LoaderHelper.stream(mElements, ModEffect.class).forEach(data -> {
-            LoaderHelper.loadClass(mElements, data.getClassType().getClassName()).ifPresent(aClass -> {
-                String memberName = data.getMemberName();
-                ECUtils.reflect.getField(aClass, memberName, null, Effect.class, mElements.logger).ifPresent(effect -> {
-                    LoaderHelper.regName(mElements, effect, LoaderHelper.getDefault(data, memberName));
-                    effects.add(effect);
-                });
-            });
-        });
-        isEffectLeaded = true;
     }
 }

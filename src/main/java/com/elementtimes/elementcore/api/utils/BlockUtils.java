@@ -1,13 +1,10 @@
 package com.elementtimes.elementcore.api.utils;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.state.Property;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-
-import javax.annotation.Nullable;
 
 /**
  * 方块工具
@@ -15,34 +12,30 @@ import javax.annotation.Nullable;
  */
 public class BlockUtils {
 
-    private static BlockUtils u = null;
-    public static BlockUtils getInstance() {
-        if (u == null) {
-            u = new BlockUtils();
-        }
-        return u;
-    }
-
-    public <T extends Comparable<T>> BlockState checkAndSetState(BlockState state, Property<T> property, T value) {
-        if (value != state.get(property)) {
-            return state.with(property, value);
-        }
-        return state;
-    }
-
-    public void setBlockState(World world, BlockPos pos, BlockState newState, @Nullable TileEntity tileEntity) {
-        BlockState oldState = world.getBlockState(pos);
+    public static void setBlockState(World world, BlockPos pos, BlockState oldState, BlockState newState, int flag) {
         if (oldState != newState) {
-            world.setBlockState(pos, newState, 3);
-            if (tileEntity != null) {
-                tileEntity.validate();
-                world.setTileEntity(pos, tileEntity);
+            TileEntity te = world.getTileEntity(pos);
+            world.setBlockState(pos, newState);
+            if (te != null && te != world.getTileEntity(pos)) {
+                te.validate();
+                world.setTileEntity(pos, te);
             }
-            world.markForRerender(pos);
         }
     }
 
-    public Direction getPosFacing(BlockPos before, BlockPos pos) {
+    public static void setBlockState(World world, BlockPos pos, BlockState newState, int flag) {
+        setBlockState(world, pos, world.getBlockState(pos), newState, flag);
+    }
+
+    public static void setBlockState(World world, BlockPos pos, BlockState oldState, BlockState newState) {
+        setBlockState(world, pos, oldState, newState, 3);
+    }
+
+    public static void setBlockState(World world, BlockPos pos, BlockState newState) {
+        setBlockState(world, pos, world.getBlockState(pos), newState, 3);
+    }
+
+    public static Direction getPosFacing(BlockPos before, BlockPos pos) {
         // face
         Direction facing = null;
         int dx = pos.getX() - before.getX();

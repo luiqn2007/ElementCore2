@@ -1,72 +1,43 @@
 package com.elementtimes.elementcore.api.utils;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.integrated.IntegratedServer;
-import net.minecraft.world.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLLoader;
+import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
+import net.minecraftforge.forgespi.language.IModFileInfo;
+import net.minecraftforge.forgespi.language.IModInfo;
+import net.minecraftforge.forgespi.language.ModFileScanData;
 
-import javax.annotation.Nullable;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
-/**
- * 与 Forge 和 Minecraft 相关的工具
- * @author luqin2007
- */
 public class CommonUtils {
 
-    private static CommonUtils u = null;
-    public static CommonUtils getInstance() {
-        if (u == null) {
-            u = new CommonUtils();
-        }
-        return u;
-    }
-
-    public Dist getSide() {
+    public static Dist getSide() {
         return FMLLoader.getDist();
     }
 
-    public boolean isServer() {
-        return FMLLoader.getDist().isDedicatedServer();
+    public static boolean isServer() {
+        return getSide().isDedicatedServer();
     }
 
-    public boolean isClient() {
-        return FMLLoader.getDist().isClient();
+    public static boolean isClient() {
+        return getSide().isClient();
     }
 
-    public net.minecraft.client.world.ClientWorld getClient() {
-        return net.minecraft.client.Minecraft.getInstance().world;
+    public static List<ModFileScanData> allScanData() {
+        return ModList.get().getAllScanData();
     }
 
-    @Nullable
-    public ServerWorld getServer() {
-        IntegratedServer server = net.minecraft.client.Minecraft.getInstance().getIntegratedServer();
-        if (server != null) {
-            return server.getWorld(net.minecraft.client.Minecraft.getInstance().world.dimension.getType());
-        }
-        return null;
+    public static Stream<ModFileScanData> findScanData(Predicate<IModInfo> check) {
+        return allScanData().stream()
+                .filter(data -> data.getIModInfoData().stream().flatMap(info -> info.getMods().stream()).anyMatch(check));
     }
 
-    @Nullable
-    public Iterable<ServerWorld> getServers() {
-        IntegratedServer server = net.minecraft.client.Minecraft.getInstance().getIntegratedServer();
-        if (server != null) {
-            return server.getWorlds();
-        }
-        return null;
-    }
-
-    @Nullable
-    public ServerWorld getServer(@Nullable PlayerEntity player) {
-        if (player instanceof ServerPlayerEntity) {
-            return ((ServerPlayerEntity) player).getServerWorld();
-        } else if (player instanceof net.minecraft.client.entity.player.AbstractClientPlayerEntity) {
-            MinecraftServer server = player.getServer();
-            return server == null ? null : server.getWorld(player.world.dimension.getType());
-        } else {
-            return null;
-        }
+    public static Optional<ModFileScanData> findScanData(String id) {
+        ModFileInfo info = ModList.get().getModFileById(id);
+        return Optional.ofNullable(info == null ? null : info.getFile().getScanResult());
     }
 }

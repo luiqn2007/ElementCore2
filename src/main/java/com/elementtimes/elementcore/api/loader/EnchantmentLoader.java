@@ -1,40 +1,41 @@
 package com.elementtimes.elementcore.api.loader;
 
 import com.elementtimes.elementcore.api.ECModElements;
-import com.elementtimes.elementcore.api.ECUtils;
-import com.elementtimes.elementcore.api.LoaderHelper;
 import com.elementtimes.elementcore.api.annotation.ModEnchantment;
+import com.elementtimes.elementcore.api.annotation.enums.EnchantmentBook;
+import com.elementtimes.elementcore.api.annotation.result.EnchantmentBookWrapper;
+import com.elementtimes.elementcore.api.helper.FindOptions;
+import com.elementtimes.elementcore.api.helper.ObjHelper;
+import com.elementtimes.elementcore.api.helper.RefHelper;
 import net.minecraft.enchantment.Enchantment;
-
-import java.util.ArrayList;
-import java.util.List;
+import net.minecraft.item.ItemGroup;
 
 public class EnchantmentLoader {
 
-    private boolean isElementLoaded = false;
-    private ECModElements mElements;
-
-    List<Enchantment> enchantments = new ArrayList<>();
-
-    public EnchantmentLoader(ECModElements elements) {
-        mElements = elements;
+    public static void load(ECModElements elements) {
+        loadEnchantment(elements);
+        loadBook(elements);
     }
 
-    public List<Enchantment> enchantments() {
-        if (!isElementLoaded) {
-            mElements.elements.load();
-            loadEnchantment();
-        }
-        return enchantments;
+    private static void loadEnchantment(ECModElements elements) {
+        ObjHelper.stream(elements, ModEnchantment.class).forEach(data -> {
+            FindOptions option = new FindOptions().withReturns(Enchantment.class).addParameterObjects(() -> new Object[0]);
+            ObjHelper.find(elements, data, option).ifPresent(obj -> {
+                Enchantment enchantment = (Enchantment) obj;
+                String regName = ObjHelper.getDefault(data);
+                ObjHelper.setRegisterName(enchantment, regName, data, elements);
+                elements.enchantments.add(enchantment);
+            });
+        });
     }
 
-    private void loadEnchantment() {
-        LoaderHelper.stream(mElements, ModEnchantment.class).forEach(data -> LoaderHelper.loadClass(mElements, data.getClassType().getClassName())
-                .flatMap(clazz -> ECUtils.reflect.getField(clazz, data.getMemberName(), null, Enchantment.class, mElements.logger))
-                .ifPresent(enchantment -> {
-                    LoaderHelper.regName(mElements, enchantment, LoaderHelper.getDefault(data, data.getMemberName()));
-                    enchantments.add(enchantment);
-                }));
-        isElementLoaded = true;
+    private static void loadBook(ECModElements elements) {
+        ObjHelper.stream(elements, ModEnchantment.Book.class).forEach(data -> {
+            ObjHelper.find(elements, data, new FindOptions().withReturns(Enchantment.class)).ifPresent(enchantment -> {
+                EnchantmentBook book = ObjHelper.getEnum(EnchantmentBook.class, ObjHelper.getDefault(data), EnchantmentBook.ALL);
+                RefHelper.get(elements, data.getAnnotationData().get("groups"), ItemGroup.class)
+                        .ifPresent(tab -> elements.enchantmentBooks.add(new EnchantmentBookWrapper(tab, book, (Enchantment) enchantment)));
+            });
+        });
     }
 }

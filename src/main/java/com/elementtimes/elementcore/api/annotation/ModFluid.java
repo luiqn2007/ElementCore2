@@ -1,6 +1,7 @@
 package com.elementtimes.elementcore.api.annotation;
 
-import net.minecraft.block.FlowingFluidBlock;
+import com.elementtimes.elementcore.api.annotation.part.Getter;
+import net.minecraft.fluid.Fluid;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -9,70 +10,32 @@ import java.lang.annotation.Target;
 
 /**
  * 流体注册
+ * 注册到 Fluid 类型对象上
+ * 若流体继承自 FlowingFluid，只需要应用于 Flowing 和 Source 类型的任意一个流体对象即可
  * @author luqin2007
  */
+@SuppressWarnings("unused")
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface ModFluid {
-
-    String value() default "";
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    @interface BurningTime {
-        /**
-         * @return 燃烧时间，包括桶和瓶
-         */
-        int value();
-    }
+    /**
+     * 非 FlowingFluid，或 source 类型流体
+     */
+    String name() default "";
 
     /**
-     * 流体对应物品的 ItemGroup
-     * @deprecated 暂时还没想好怎么合并
+     * flowing 类型流体
      */
-    @Deprecated
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    @interface ItemGroup {
-        /**
-         * 流体对应物品的 ItemGroup
-         * @return ItemGroup
-         */
-        String value() default "";
-    }
+    String flowingName() default "";
 
     /**
-     * 流体的 FluidTags
+     * 不注册流体桶
+     * 当没有流体桶或手动注册流体桶时，该值应设为 true
      */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    @interface Tags {
-        /**
-         * 流体对应物品的 FluidTags
-         * @return FluidTags
-         */
-        String[] value() default "";
-    }
+    boolean noBucket() default false;
 
     /**
-     * 流体的 FlowingFluidBlock
-     * 忽略则使用 FlowingFluidBlock
-     * 构造函数接受一个 Fluid 参数
+     * 流体方块注册
      */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    @interface Block {
-        /**
-         * 流体对应物品的 FluidTags
-         * @return FluidTags
-         */
-        Class<? extends FlowingFluidBlock> value();
-    }
-
-    /**
-     * 气体
-     */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    @interface Gas { }
+    Getter block() default @Getter;
 }

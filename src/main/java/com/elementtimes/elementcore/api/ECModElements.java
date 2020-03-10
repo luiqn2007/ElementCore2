@@ -1,82 +1,157 @@
 package com.elementtimes.elementcore.api;
 
-import com.elementtimes.elementcore.api.event.FmlRegister;
-import com.elementtimes.elementcore.api.event.ForgeRegister;
-import com.elementtimes.elementcore.api.event.RuntimeEvent;
-import com.elementtimes.elementcore.api.loader.*;
+import com.elementtimes.elementcore.api.annotation.result.*;
+import com.elementtimes.elementcore.api.event.FMLEvent;
+import com.elementtimes.elementcore.api.event.ForgeEvent;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.tree.CommandNode;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.block.Block;
+import net.minecraft.command.CommandSource;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.inventory.container.ContainerType;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.SpawnEggItem;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.potion.Potion;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.javafmlmod.FMLModContainer;
+import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkRegistry;
+import net.minecraftforge.fml.network.event.EventNetworkChannel;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
-import net.minecraftforge.forgespi.language.ModFileScanData;
-import org.apache.logging.log4j.LogManager;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.message.Message;
+import org.apache.logging.log4j.spi.AbstractLogger;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.function.*;
 
 /**
  * 总入口，用于注册所有事件，收集注解产物
  * @author luqin2007
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
-public class ECModElements {
+public class ECModElements extends AbstractLogger {
 
-    public final BlockLoader blocks;
-    public final CapabilityLoader capabilities;
-    public final ContainerTypeLoader containerTypes;
-    public final ElementLoader elements;
-    public final EnchantmentLoader enchantments;
-    public final FluidLoader fluids;
-    public final ItemGroupLoader itemGroups;
-    public final ItemLoader items;
-    public final MethodLoader methods;
-    public final NetworkLoader networks;
-    public final TileEntityTypeLoader tileEntityTypes;
-    public final RecipeLoader recipes;
-    public final PotionLoader potions;
+    public boolean isLoaded = false;
 
-    public final HashMap<String, Class> classes = new HashMap<>();
-    public final SimpleChannel channel;
-    public int nextNetworkId = 0;
-    public final FMLModContainer container;
-    public final ModFileScanData data;
-    public final Logger logger;
-    public boolean isLoad = false;
-    private boolean debugEnable;
-    private final Object clientElement;
-    public final static Map<String, ECModElements> MODS = new HashMap<>();
+    /**
+     * Class
+     */
+    public final Map<String, Class<?>> classes = new HashMap<>();
+
+    /**
+     * Block
+     */
+    public final List<Block> blocks = new ArrayList<>();
+    public final Map<Block, Item> blockItems = new HashMap<>();
+    public final List<TileEntityType<?>> teTypes = new ArrayList<>();
+    public final List<TerWrapper> ters = new ArrayList<>();
+    public final List<FeatureWrapper> features = new ArrayList<>();
+    public final List<BlockColorWrapper> blockColors = new ArrayList<>();
+
+    /**
+     * Item
+     */
+    public final List<Item> items = new ArrayList<>();
+    public final List<ItemColorWrapper> itemColors = new ArrayList<>();
+    public final Map<String, List<Item>> itemOreNames = new HashMap<>();
+
+    /**
+     * Fluid
+     */
+    public final List<Fluid> fluids = new ArrayList<>();
+    public final List<Supplier<Item>> fluidBuckets = new ArrayList<>();
+    public final List<Supplier<Block>> fluidBlocks = new ArrayList<>();
+
+    /**
+     * Capability
+     */
+    public final List<CapabilityData> capabilities = new ArrayList<>();
+
+    /**
+     * Network
+     */
+    public final List<SimpleMessageWrapper> netSimples = new ArrayList<>();
+    public final List<Object> netEvents = new ArrayList<>();
+    public SimpleChannel simpleChannel;
+    public EventNetworkChannel eventChannel;
+    public ResourceLocation simpleChannelName, eventChannelName;
+
+    /**
+     * Enchantment
+     */
+    public final List<Enchantment> enchantments = new ArrayList<>();
+    public final List<EnchantmentBookWrapper> enchantmentBooks = new ArrayList<>();
+
+    /**
+     * Potion
+     */
+    public final List<Potion> potions = new ArrayList<>();
+
+    /**
+     * GUI
+     */
+    public final List<ContainerType<?>> containerTypes = new ArrayList<>();
+    public final List<ScreenWrapper> containerScreens = new ArrayList<>();
+
+    /**
+     * Command
+     */
+    public final List<CommandNode<CommandSource>> commands = new ArrayList<>();
+    public final List<LiteralArgumentBuilder<CommandSource>> commandBuilders = new ArrayList<>();
+
+    /**
+     * Entity
+     */
+    public final List<EntityType<?>> entities = new ArrayList<>();
+    public final List<EntityTypeWrapper> entityWrappers = new ArrayList<>();
+    public final List<EntityRendererWrapper> entityRenders = new ArrayList<>();
+    public final List<SpawnEggItem> entityEggs = new ArrayList<>();
+    public final List<EntitySpawner> entitySpawns = new ArrayList<>();
+
+    /**
+     * Key
+     */
+    public final List<KeyWrapper> keys = new ArrayList<>();
+
+    /**
+     * Tools
+     */
+    public final Map<Object, ToIntFunction<ItemStack>> burnTimes = new HashMap<>();
+    public final List<TooltipsWrapper> tooltips = new ArrayList<>();
+    public Config config;
+    public ECModContainer container;
 
     ECModElements(boolean debugEnable,
-                  FMLModContainer modContainer, ModFileScanData data,
-                  String netId, String netVer) {
-        this.debugEnable = debugEnable;
-        this.clientElement = ECUtils.common.isClient() ? new ECModElementsClient(this) : null;
-        this.container = modContainer;
-        this.logger = LogManager.getLogger(modContainer.getModInfo().getModId());
-        this.data = data;
-        this.channel = NetworkRegistry.newSimpleChannel(new ResourceLocation(container.getModId(), netId), () -> netVer, netVer::equals, netVer::equals);
-
-        blocks = new BlockLoader(this);
-        capabilities = new CapabilityLoader(this);
-        containerTypes = new ContainerTypeLoader(this);
-        elements = new ElementLoader(this);
-        enchantments = new EnchantmentLoader(this);
-        fluids = new FluidLoader(this);
-        itemGroups = new ItemGroupLoader(this);
-        items = new ItemLoader(this);
-        methods = new MethodLoader(this);
-        networks = new NetworkLoader(this);
-        tileEntityTypes = new TileEntityTypeLoader(this);
-        recipes = new RecipeLoader(this);
-        potions = new PotionLoader(this);
+                  boolean netSimple, ResourceLocation netSimpleName, Supplier<String> simpleNetVersion, Predicate<String> simpleClientVersions, Predicate<String> simpleServerVersions,
+                  boolean netEvent, ResourceLocation netEventName, Supplier<String> eventNetVersion, Predicate<String> eventClientVersions, Predicate<String> eventServerVersions,
+                  Config config, ModContainer modContainer, Logger logger) {
+        this.container = new ECModContainer(modContainer, this, debugEnable, logger);
+        this.config = config;
+        simpleChannelName = netSimple ? netSimpleName == null ? new ResourceLocation(modContainer.getModId(), "SimpleChannelRegisterByElementCore") : netSimpleName : null;
+        simpleChannel = netSimple ? NetworkRegistry.newSimpleChannel(simpleChannelName, simpleNetVersion, simpleClientVersions, simpleServerVersions) : null;
+        eventChannelName = netEvent ? netEventName == null ? new ResourceLocation(modContainer.getModId(), "EventChannelRegisterByElementCore") : netEventName : null;
+        eventChannel = netEvent ? NetworkRegistry.newEventChannel(eventChannelName, eventNetVersion, eventClientVersions, eventServerVersions) : null;
     }
 
     public static Builder builder() {
@@ -85,8 +160,13 @@ public class ECModElements {
 
     public static class Builder {
 
-        private boolean debugEnable = true;
-        private String networkVersion = "1", networkId = "mod_network";
+        private boolean debugEnable = false, netSimple = true, netEvent = false;
+        private Logger logger = null;
+        private ResourceLocation netSimpleName = null, netEventName = null;
+        private Supplier<String> simpleNetVersion = () -> "", eventNetVersion = () -> "";
+        private Predicate<String> simpleClientVersions = s -> true, eventClientVersions = s -> true;
+        private Predicate<String> simpleServerVersions = s -> true, eventServerVersions = s -> true;
+        private Config config = new Config();
 
         public Builder enableDebugMessage() {
             debugEnable = true;
@@ -96,75 +176,213 @@ public class ECModElements {
             debugEnable = false;
             return this;
         }
-        public Builder withNetworkInfo(String id, String version) {
-            networkId = id;
-            networkVersion = version;
+        public Builder setLogger(Logger logger) {
+            this.logger = logger;
+            return this;
+        }
+        public Builder useSimpleNetwork() {
+            netSimple = true;
+            return this;
+        }
+        public Builder noSimpleNetwork() {
+            netSimple = false;
+            return this;
+        }
+        public Builder setSimpleChannelName(ResourceLocation name) {
+            netSimpleName = name;
+            return this;
+        }
+        public Builder setSimpleChannelName(String namespace, String name) {
+            netSimpleName = new ResourceLocation(namespace, name);
+            return this;
+        }
+        public Builder setSimpleNetProtocolVersion(String version) {
+            simpleNetVersion = () -> version;
+            return this;
+        }
+        public Builder setSimpleNetProtocolVersion(Supplier<String> version) {
+            simpleNetVersion = version;
+            return this;
+        }
+        public Builder setSimpleNetClientAcceptedVersion(Predicate<String> acceptedVersion) {
+            this.simpleClientVersions = acceptedVersion;
+            return this;
+        }
+        public Builder setSimpleNetClientAcceptedVersion(String... versions) {
+            this.simpleClientVersions = s -> ArrayUtils.contains(versions, s);
+            return this;
+        }
+        public Builder useEventNetwork() {
+            netEvent = true;
+            return this;
+        }
+        public Builder noEventNetwork() {
+            netEvent = false;
+            return this;
+        }
+        public Builder setEventChannelName(ResourceLocation name) {
+            netEventName = name;
+            return this;
+        }
+        public Builder setEventChannelName(String namespace, String name) {
+            netEventName = new ResourceLocation(namespace, name);
+            return this;
+        }
+        public Builder setEventNetProtocolVersion(String version) {
+            eventNetVersion = () -> version;
+            return this;
+        }
+        public Builder setEventNetProtocolVersion(Supplier<String> version) {
+            eventNetVersion = version;
+            return this;
+        }
+        public Builder setEventNetClientAcceptedVersion(Predicate<String> acceptedVersion) {
+            this.eventClientVersions = acceptedVersion;
+            return this;
+        }
+        public Builder setEventNetClientAcceptedVersion(String... versions) {
+            this.eventClientVersions = s -> ArrayUtils.contains(versions, s);
+            return this;
+        }
+        public Builder enableOBJModel() {
+            config.useOBJ = true;
+            return this;
+        }
+        public Builder enableB3DModel() {
+            config.useB3D = true;
             return this;
         }
 
-        public ECModElements build() {
+        public ECModContainer build() {
             // newInstance
             FMLJavaModLoadingContext context = FMLJavaModLoadingContext.get();
-            IEventBus eventBus = context.getModEventBus();
-            Logger logger = LogManager.getLogger();
-            FMLModContainer container = (FMLModContainer) ModLoadingContext.get().getActiveContainer();
-            ModFileScanData data = null;
-            Optional<ModFileScanData> dataOptional = ECUtils.reflect.getField(FMLModContainer.class, ModFileScanData.class, container, logger);
-            if (dataOptional.isPresent()) {
-                data = dataOptional.get();
-            }
-            ECModElements elements = new ECModElements(debugEnable, container, data, networkId, networkVersion);
-            MODS.put(container.getModId(), elements);
+            ModContainer container = ModLoadingContext.get().getActiveContainer();
+            ECModElements elements = new ECModElements(debugEnable,
+                    netSimple, netSimpleName, simpleNetVersion, simpleClientVersions, simpleServerVersions,
+                    netEvent, netEventName, eventNetVersion, eventClientVersions, eventServerVersions,
+                    config, container, logger);
+            ECModContainer.MODS.put(container.getModId(), elements.container);
             // event
-            eventBus.register(new ForgeRegister(elements));
-            eventBus.register(new RuntimeEvent(elements));
-            eventBus.addListener((new FmlRegister(elements))::setup);
-            if (ECUtils.common.isClient()) {
-                container.getEventBus().register(new com.elementtimes.elementcore.api.event.client.ForgeBusRegisterClient(elements));
-                container.getEventBus().register(new com.elementtimes.elementcore.api.event.client.RuntimeEventClient(elements));
-                container.getEventBus().register(new com.elementtimes.elementcore.api.event.client.FmlClientRegister(elements));
-            }
-            return elements;
+            new FMLEvent(elements.container).apply(context.getModEventBus());
+            MinecraftForge.EVENT_BUS.register(new ForgeEvent(elements.container));
+            return elements.container;
         }
+    }
+
+    public boolean sendTo(Object message, NetworkManager net, NetworkDirection direction) {
+        if (simpleChannel == null) {
+            return false;
+        }
+        simpleChannel.sendTo(message, net, direction);
+        return true;
     }
 
     @OnlyIn(Dist.CLIENT)
-    public ECModElementsClient client() {
-        return (ECModElementsClient) clientElement;
-    }
-
-    public String name() {
-        return container.getModInfo().getDisplayName();
-    }
-
-    public String id() {
-        return container.getModInfo().getModId();
-    }
-
-    public ArtifactVersion version() {
-        return container.getModInfo().getVersion();
-    }
-
-    public boolean isDebugMessageEnable() {
-        return debugEnable;
-    }
-
-    public void enableDebugMessage() {
-        debugEnable = true;
-    }
-
-    public void disableDebugMessage() {
-        debugEnable = false;
-    }
-
-    /**
-     * 发送 Warn 等级的 Log
-     * @param message Log 格式化信息 {}
-     * @param params Log 信息格式化成分
-     */
-    public void warn(String message, Object... params) {
-        if (isDebugMessageEnable()) {
-            logger.warn(message, params);
+    public boolean sendToServer(Object message) {
+        if (simpleChannel == null) {
+            return false;
         }
+        simpleChannel.sendToServer(message);
+        return true;
+    }
+
+    public boolean sendTo(Object message, ServerPlayerEntity player) {
+        return sendTo(message, player.connection.netManager, NetworkDirection.PLAY_TO_SERVER);
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Deprecated
+    public boolean postTo(Consumer<ByteBuf> bufWriter) {
+        return false;
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, Message message, Throwable t) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, CharSequence message, Throwable t) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, String message, Throwable t) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, String message) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, Object message, Throwable t) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, String message, Object... params) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, String message, Object p0) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, String message, Object p0, Object p1) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, String message, Object p0, Object p1, Object p2) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, String message, Object p0, Object p1, Object p2, Object p3) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, String message, Object p0, Object p1, Object p2, Object p3, Object p4) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public boolean isEnabled(Level level, Marker marker, String message, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6, Object p7, Object p8, Object p9) {
+        return container.isDebugMessageEnable();
+    }
+
+    @Override
+    public void logMessage(String fqcn, Level level, Marker marker, Message message, Throwable t) {
+        container.logger.log(level, marker, message, t);
+    }
+
+    @Override
+    public Level getLevel() {
+        return container.logger.getLevel();
     }
 }

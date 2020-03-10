@@ -1,43 +1,133 @@
 package com.elementtimes.elementcore.api.annotation;
 
+import com.elementtimes.elementcore.api.annotation.part.EntitySpawn;
+import com.elementtimes.elementcore.api.annotation.part.Getter;
+import com.elementtimes.elementcore.api.annotation.part.Method;
+import com.elementtimes.elementcore.api.annotation.part.Method2;
+import com.elementtimes.elementcore.api.annotation.part.item.Properties;
+import net.minecraft.entity.EntityClassification;
+import net.minecraft.entity.EntityType;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 实体
- * @deprecated 暂时未实现
+ * TileEntityType 注册
+ * 该注解可被应用到 Entity 类上，根据 Entity 类生成 EntityType 对象
  * @author luqin2007
  */
 @SuppressWarnings("unused")
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-@Deprecated
 public @interface ModEntity {
 
-    int network() default 1;
-    String id();
-    String name();
     /**
-     * 实体跟踪
-     * trackerRange 半径, 即超过该半径, 实体就不更新了 一般生物 64 比较合适
-     * updateFrequency 更新频率 单位 gametick 一般生物 3 比较合适, MAX_VALUE 为 不更新
-     * sendVelocityUpdate 是否同步实体的速度更新, 静止实体和手动更新位置的实体为 false
+     * 实体 id
+     * 默认使用 [modid].[className]
      */
-    int trackerRange() default 64;
-    int updateFrequency() default 3;
-    boolean sendVelocityUpdate() default true;
-    // 是否添加 怪物蛋
-    boolean hasEgg() default false;
-    int eggColorPrimary() default 0x000000;
-    int eggColorSecondary() default 0x000000;
-    // 是否在世界生成
-    boolean canSpawn() default false;
-    int spawnWeight() default 0; // weight 权重越高越可能优先生成
-    int spawnMin() default 0;
-    int spawnMax() default 0;
-    String[] biomeIds() default { "plains" };
-    // 类
-    String renderClass();
+    String id() default "";
+    float width() default 0.6f;
+    float height() default 1.8f;
+
+    /**
+     * 实体生成方法
+     * 参数: EntityType, World
+     * 返回值: Entity
+     */
+    Method create() default @Method;
+    EntityClassification classification() default EntityClassification.CREATURE;
+
+    /**
+     * 实体特性相关
+     */
+    boolean disableSummoning() default false;
+    boolean disableSerialization() default false;
+    boolean immuneToFire() default false;
+
+    /**
+     * 半径, 即超过该半径, 实体就不更新了
+     *  -1 为默认，详见 {@link EntityType#defaultTrackingRangeSupplier()}
+     */
+    @SuppressWarnings("JavadocReference")
+    int trackerRange() default -1;
+
+    /**
+     * 更新频率 单位 gametick, MAX_VALUE 为 不更新
+     *  -1 为默认，详见 {@link EntityType#defaultUpdateIntervalSupplier()}
+     */
+    @SuppressWarnings("JavadocReference")
+    int updateInterval() default -1;
+
+    /**
+     * 客户端实体生成
+     * 参数：
+     *  FMLPlayMessages.SpawnEntity spawnEntity
+     *  World world
+     * 返回值：
+     *  Entity
+     */
+    Method2 clientFactory();
+
+    /**
+     * 获取该实体的渲染类的创建方法
+     * 参数
+     *  EntityRendererManager
+     * 返回值
+     *  EntityRenderer
+     */
+    Method2 renderer() default @Method2;
+
+    /**
+     * 若直接注册 EntityType 实例，使用此注解
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    @interface Type {
+        /**
+         * RegistryName
+         */
+        String value() default "";
+    }
+
+    /**
+     * 生物生成
+     * 该注解应配合 ModEntity 或 ModEntity.Type 注解使用
+     * 若不与这两个注解配合使用，应当重写 getter 属性，返回一个 EntityType 对象
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.TYPE, ElementType.FIELD})
+    @interface Spawn {
+        EntitySpawn[] value();
+
+        /**
+         * 若被注解对象没有被 ModEntity 或 ModEntity.Type 注解注册，使用该属性获取一个 EntityType 对象
+         */
+        Getter getter() default @Getter;
+    }
+
+    /**
+     * 为该实体创建一个怪物蛋
+     * 该注解应配合 ModEntity 或 ModEntity.Type 注解使用
+     * 若不与这两个注解配合使用，应当重写 getter 属性，返回一个 EntityType 对象
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.TYPE, ElementType.FIELD})
+    @interface Egg {
+
+        /**
+         * RegistryName
+         */
+        String name() default "";
+
+        int primaryColor() default 0x00000000;
+        int secondaryColor() default 0x00000000;
+        Properties properties() default @Properties;
+
+        /**
+         * 若被注解对象没有被 ModEntity 或 ModEntity.Type 注解注册，使用该属性获取一个 EntityType 对象
+         */
+        Getter getter() default @Getter;
+    }
 }

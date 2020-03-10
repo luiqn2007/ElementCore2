@@ -1,119 +1,97 @@
 package com.elementtimes.elementcore.api.loader;
 
-import com.elementtimes.elementcore.api.annotation.ModBlock;
 import com.elementtimes.elementcore.api.ECModElements;
-import com.elementtimes.elementcore.api.ECUtils;
-import com.elementtimes.elementcore.api.LoaderHelper;
-import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import com.elementtimes.elementcore.api.annotation.ModBlock;
+import com.elementtimes.elementcore.api.annotation.enums.ValueType;
+import com.elementtimes.elementcore.api.annotation.part.Parts;
+import com.elementtimes.elementcore.api.annotation.result.BlockColorWrapper;
+import com.elementtimes.elementcore.api.annotation.result.TooltipsWrapper;
+import com.elementtimes.elementcore.api.helper.FindOptions;
+import com.elementtimes.elementcore.api.helper.ObjHelper;
+import com.elementtimes.elementcore.api.helper.RefHelper;
+import com.elementtimes.elementcore.api.utils.CommonUtils;
 import net.minecraft.block.Block;
-import net.minecraft.fluid.FlowingFluid;
+import net.minecraft.block.material.Material;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
 
+/**
+ * @author luqin2007
+ */
 public class BlockLoader {
 
-    private boolean isBlockLoaded = false;
-    private boolean isBurningTimeLoaded = false;
-    private boolean isGroupLoaded = false;
-    private boolean isTagLoaded = false;
-    private ECModElements mElements;
-
-    Map<String, Block> blocks = new HashMap<>();
-    Object2IntMap<String> burningTimes = new Object2IntArrayMap<>();
-    Map<String, String> groups = new HashMap<>();
-    Map<String, List<Block>> tags = new HashMap<>();
-    Map<String, List<Block>> tagItems = new HashMap<>();
-
-    public BlockLoader(ECModElements elements) {
-        mElements = elements;
+    public static void load(ECModElements elements) {
+        loadBlock(elements);
     }
 
-    public Map<String, Block> blocks() {
-        if (!isBlockLoaded) {
-            mElements.elements.load();
-            loadBlocks();
-        }
-        return blocks;
+    private static void loadBlock(ECModElements elements) {
+        ObjHelper.stream(elements, ModBlock.class).forEach(data -> {
+            String name = ObjHelper.getDefault(data);
+            // block
+            Map<String, Object> dataMap = data.getAnnotationData();
+            FindOptions options = new FindOptions().withReturns(Block.class)
+                    .addParameterObjects(() -> new Object[0])
+                    .addParameterObjects(() ->
+                            new Object[] {Parts.propertiesBlock((Map<String, Object>) dataMap.get("block"), elements)}, Block.Properties.class);
+            Block block = (Block) ObjHelper.find(elements, data, options).orElseGet(() -> new Block(Block.Properties.create(Material.ROCK)));
+            ObjHelper.setRegisterName(block, name, data, elements);
+            elements.blocks.add(block);
+            loadBlockItem(elements, block, dataMap);
+            loadBlockFeature(elements, block, dataMap);
+            loadBlockTooltips(elements, block, dataMap);
+            if (CommonUtils.isClient()) {
+                loadBlockColor(elements, block, dataMap);
+            }
+        });
     }
 
-    private void loadBlocks() {
-        LoaderHelper.stream(mElements, ModBlock.class).forEach(data -> {
-            String className = data.getClassType().getClassName();
-            LoaderHelper.loadClass(mElements, className).ifPresent(clazz -> {
-                String memberName = data.getMemberName();
-                ECUtils.reflect.getField(clazz, memberName, null, Block.class, mElements.logger).ifPresent(block -> {
-                    LoaderHelper.regName(mElements, block, LoaderHelper.getDefault(data, memberName));
-                    blocks.put(className + "." + memberName, block);
+    private static void loadBlockItem(ECModElements elements, Block block, Map<String, Object> dataMap) {
+        switch (ObjHelper.getEnum(ValueType.class, dataMap.get("itemType"), ValueType.CONST)) {
+            case OBJECT:
+                RefHelper.get(elements, dataMap.get("itemObj"), Item.class).ifPresent(item -> {
+                    ObjHelper.setRegisterName(block, item);
+                    elements.blockItems.put(block, item);
                 });
-            });
-        });
-        isBlockLoaded = true;
-    }
-
-    public Object2IntMap<String> burningTimes() {
-        if (!isBurningTimeLoaded) {
-            loadBurningTimes();
+                break;
+            case NONE:
+                break;
+            default:
+                Item.Properties properties = Parts.propertiesItem((Map<String, Object>) dataMap.get("item"), elements);
+                BlockItem item = new BlockItem(block, properties);
+                ObjHelper.setRegisterName(block, item);
+                elements.blockItems.put(block, item);
         }
-        return burningTimes;
     }
 
-    private void loadBurningTimes() {
-        LoaderHelper.stream(mElements, ModBlock.BurningTime.class).forEach(data -> {
-            LoaderHelper.getBlock(mElements, data.getClassType().getClassName(), data.getMemberName()).ifPresent(block -> {
-                burningTimes.put(block.getRegistryName().toString(), LoaderHelper.getDefault(data));
-            });
-        });
-        isBurningTimeLoaded = true;
-    }
-
-    public Map<String, String> groups() {
-        if (!isGroupLoaded) {
-            loadGroups();
+    private static void loadBlockFeature(ECModElements elements, Block block, Map<String, Object> dataMap) {
+        List<Map<String, Object>> features = (List<Map<String, Object>>) dataMap.getOrDefault("features", Collections.emptyList());
+        for (Map<String, Object> feature : features) {
+            elements.features.add(Parts.feature(feature, block, elements));
         }
-        return groups;
     }
 
-    private void loadGroups() {
-        LoaderHelper.stream(mElements, ModBlock.ItemGroup.class).forEach(data -> {
-            LoaderHelper.getBlock(mElements, data.getClassType().getClassName(), data.getMemberName())
-                    .ifPresent(block -> groups.put(block.getRegistryName().toString(), LoaderHelper.getDefault(data, "")));
-        });
-        isGroupLoaded = true;
-    }
-
-    public Map<String, List<Block>> tags() {
-        if (!isTagLoaded) {
-            loadTags();
+    @OnlyIn(Dist.CLIENT)
+    private static void loadBlockColor(ECModElements elements, Block block, Map<String, Object> dataMap) {
+        Object blockColor = Parts.color((Map<String, Object>) dataMap.get("blockColor"), false, elements);
+        Object itemColor = Parts.color((Map<String, Object>) dataMap.get("itemColor"), false, elements);
+        if (blockColor != null || itemColor != null) {
+            elements.blockColors.add(new BlockColorWrapper(block, itemColor, blockColor));
         }
-        return tags;
     }
 
-    public Map<String, List<Block>> tagItems() {
-        if (!isTagLoaded) {
-            loadTags();
+    private static void loadBlockTooltips(ECModElements elements, Block block, Map<String, Object> dataMap) {
+        Predicate<ItemTooltipEvent> p = event -> event.getItemStack().getItem().asItem() == block.asItem();
+        TooltipsWrapper tooltips = Parts.tooltips((Map<String, Object>) dataMap.get("tooltips"), p, elements);
+        if (tooltips != null) {
+            elements.tooltips.add(tooltips);
         }
-        return tagItems;
-    }
-
-    private void loadTags() {
-        LoaderHelper.stream(mElements, ModBlock.Tags.class).forEach(data -> {
-            String memberName = data.getMemberName();
-            LoaderHelper.getBlock(mElements, data.getClassType().getClassName(), memberName).ifPresent(block -> {
-                List<String> tagText = LoaderHelper.getDefault(data, Collections.singletonList("forge:" + memberName));
-                if ((boolean) data.getAnnotationData().getOrDefault("item", true)) {
-                    for (String tag : tagText) {
-                        String tagValue = tag.toLowerCase();
-                        tags.computeIfAbsent(tagValue, (s) -> new ArrayList<>()).add(block);
-                        tagItems.computeIfAbsent(tagValue, (s) -> new ArrayList<>()).add(block);
-                    }
-                } else {
-                    for (String tag : tagText) {
-                        tags.computeIfAbsent(tag.toLowerCase(), (s) -> new ArrayList<>()).add(block);
-                    }
-                }
-            });
-        });
-        isTagLoaded = true;
     }
 }

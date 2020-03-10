@@ -1,14 +1,10 @@
 package com.elementtimes.elementcore.api.template.groups;
 
-import net.minecraft.block.Block;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.IItemProvider;
 import net.minecraft.util.NonNullList;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-
-import javax.annotation.Nonnull;
 
 /**
  * 创造模式物品栏
@@ -17,7 +13,7 @@ import javax.annotation.Nonnull;
  */
 public class ItemGroupStatic extends ItemGroup {
 
-    private ItemStack mIconItem;
+    private final ItemStack mIconItem;
 
     public ItemGroupStatic(String label, ItemStack iconItem) {
         super(label);
@@ -28,22 +24,20 @@ public class ItemGroupStatic extends ItemGroup {
         this(label, (ItemStack) null);
     }
 
-    public ItemGroupStatic(String label, Item item) {
+    public ItemGroupStatic(String label, IItemProvider item) {
         this(label, new ItemStack(item));
     }
 
-    public ItemGroupStatic(String label, Block block) {
-        this(label, new ItemStack(block));
+    public ItemGroupStatic(String label, IItemProvider item, CompoundNBT nbt) {
+        this(label, new ItemStack(item, 1, nbt));
     }
 
     @Override
-    @Nonnull
-    @OnlyIn(Dist.CLIENT)
     public ItemStack createIcon() {
         if (mIconItem == null) {
             NonNullList<ItemStack> list = NonNullList.create();
             fill(list);
-            mIconItem = list.isEmpty() ? ItemStack.EMPTY : list.get(0);
+            return list.isEmpty() ? ItemStack.EMPTY : list.get(0);
         }
         return mIconItem;
     }

@@ -1,173 +1,107 @@
 package com.elementtimes.elementcore.api.template.groups;
 
-import com.elementtimes.elementcore.api.ECUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
+import com.google.common.collect.Lists;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.tags.Tag;
 import net.minecraft.util.IItemProvider;
 import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 创造模式物品栏
  * 物品栏物品会变化
  * @author luqin2007
  */
-@SuppressWarnings("unused")
 public class ItemGroupDynamic extends ItemGroup {
-    public static final long DEFAULT_TICK = 20;
+    private static final long DEFAULT_TICK = 20;
 
     private long dynamicChangeTick;
     private long markTime = 0;
     private int iconIndex = 0;
-    private Supplier<List<ItemStack>> dynamicItemSupplier;
-    private List<ItemStack> dynamicItems = null;
+    private List<ItemStack> dynamicItems;
     private ItemStack stack = ItemStack.EMPTY;
 
-    public ItemGroupDynamic(long tick, String label) {
+    public ItemGroupDynamic(String label, long changeTick, List<ItemStack> dynamicItems) {
         super(label);
-        dynamicChangeTick = tick;
-        dynamicItemSupplier = Collections::emptyList;
+        this.dynamicChangeTick = changeTick;
+        this.dynamicItems = dynamicItems;
     }
 
-    // Object 接受:
-    //  ItemStack, IItemProvider, Fluid
-    //  Tag<Item>
-    //  String, ResourceLocation
-    //  Supplier<Object> (Object 同样符合之前要求)
-    // 注意 这里 Object 中 String/ResourceLocation 均解释为 RegistryName，而非 Tag
-    public ItemGroupDynamic(String label, long tick, Object... objects) {
-        super(label);
-        dynamicChangeTick = tick;
-        dynamicItemSupplier = () -> {
-            List<ItemStack> list = new ArrayList<>();
-            for (Object object : objects) {
-                readObject(list, object);
-            }
-            return list;
-        };
-    }
-
-    public ItemGroupDynamic(String label, long tick, boolean isTag, String... names) {
-        super(label);
-        dynamicChangeTick = tick;
-        if (isTag) {
-            dynamicItemSupplier = () -> {
-                List<Item> list = new ArrayList<>();
-                for (String name : names) {
-                    Tag<Item> itemTag = ItemTags.getCollection().get(new ResourceLocation(name.toLowerCase()));
-                    if (itemTag != null) {
-                        for (Item item : itemTag.getAllElements()) {
-                            if (!list.contains(item)) {
-                                list.add(item);
-                            }
-                        }
+    /**
+     * 切换图标
+     * @param label 标签
+     * @param changeTick 时间间隔
+     * @param elements 显示物品，接受 ItemStack, Item 或 Block
+     */
+    public ItemGroupDynamic(String label, long changeTick, Object... elements) {
+        this(label, changeTick, Arrays.stream(elements)
+                .map(e -> {
+                    if (e instanceof ItemStack) {
+                        return (ItemStack) e;
+                    } else if (e instanceof IItemProvider) {
+                        return new ItemStack((IItemProvider) e);
+                    } else {
+                        return null;
                     }
-                }
-                List<ItemStack> stacks = new ArrayList<>(list.size());
-                for (Item item : list) {
-                    stacks.add(new ItemStack(item));
-                }
-                return stacks;
-            };
-        } else {
-            dynamicItemSupplier = () -> {
-                List<ItemStack> stacks = new ArrayList<>(names.length);
-                for (String name : names) {
-                    Item item = ECUtils.item.getItem(name);
-                    if (item != Items.AIR) {
-                        stacks.add(new ItemStack(item));
-                    }
-                }
-                return stacks;
-            };
-        }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList()));
     }
 
-    public ItemGroupDynamic(String label, Object... objects) {
-        super(label);
-        dynamicChangeTick = DEFAULT_TICK;
-        dynamicItemSupplier = () -> {
-            List<ItemStack> list = new ArrayList<>();
-            for (Object object : objects) {
-                readObject(list, object);
-            }
-            return list;
-        };
+    public ItemGroupDynamic(String label) {
+        this(label, DEFAULT_TICK, new ArrayList<>());
     }
 
-    public ItemGroupDynamic(String label, boolean isTag, String... names) {
-        this(label, DEFAULT_TICK, isTag, names);
+    public ItemGroupDynamic(String label, long tick, ItemStack... itemStacks) {
+        this(label, tick, Lists.newArrayList(itemStacks));
     }
 
-    private void readObject(List<ItemStack> stacks, Object object) {
-        if (object instanceof ItemStack) {
-            stacks.add((ItemStack) object);
-        } else if (object instanceof IItemProvider) {
-            stacks.add(new ItemStack((IItemProvider) object));
-        } else if (object instanceof Fluid) {
-            ((Fluid) object).getFilledBucket();
-        } else if (object instanceof Tag) {
-            for (Object element : ((Tag) object).getAllElements()) {
-                readObject(stacks, element);
-            }
-        } else if (object instanceof String) {
-            Item item = ECUtils.item.getItem((String) object);
-            readObject(stacks, item);
-        } else if (object instanceof ResourceLocation) {
-            Item item = ECUtils.item.getItem((ResourceLocation) object);
-            readObject(stacks, item);
-        } else if (object instanceof Supplier) {
-            readObject(stacks, ((Supplier) object).get());
-        } else if (object instanceof Iterable) {
-            ((Collection) object).forEach(obj -> readObject(stacks, obj));
-        } else if (object instanceof Object[]) {
-            for (Object obj : ((Object[]) object)) {
-                readObject(stacks, obj);
-            }
-        }
+    public ItemGroupDynamic(String label, long changeTick) {
+        this(label, changeTick, new ArrayList<>());
+    }
+
+    public ItemGroupDynamic(String label, ItemStack... stacks) {
+        this(label, DEFAULT_TICK, Lists.newArrayList(stacks));
+    }
+
+    public ItemGroupDynamic(String label, IItemProvider... items) {
+        this(label, DEFAULT_TICK, Arrays.stream(items).map(ItemStack::new).collect(Collectors.toList()));
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    @Nonnull
-    public ItemStack getIcon() {
-        return createIcon();
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    @Nonnull
     public ItemStack createIcon() {
         if (dynamicItems == null) {
-            dynamicItems = dynamicItemSupplier.get();
-            if (dynamicItems == null || dynamicItems.isEmpty()) {
-                dynamicItems = NonNullList.create();
-                fill((NonNullList<ItemStack>) dynamicItems);
+            dynamicItems = new ArrayList<>();
+        }
+        if (dynamicItems.size() == 0) {
+            stack = ItemStack.EMPTY;
+        } else {
+            long worldTime = net.minecraft.client.Minecraft.getInstance().world.getGameTime();
+            if (worldTime - markTime >= dynamicChangeTick) {
+                iconIndex++;
+                iconIndex %= dynamicItems.size();
+                stack = dynamicItems.get(iconIndex);
+                markTime = worldTime;
             }
         }
-
-        long worldTime = Minecraft.getInstance().world.getGameTime();
-        if (worldTime - markTime >= dynamicChangeTick) {
-            iconIndex++;
-            iconIndex %= dynamicItems.size();
-            stack = dynamicItems.get(iconIndex);
-            markTime = worldTime;
-        }
         return stack;
+    }
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public void fill(NonNullList<ItemStack> items) {
+        super.fill(items);
+        boolean isEmpty = dynamicItems == null || dynamicItems.isEmpty();
+        if (isEmpty) {
+            dynamicItems = items;
+        }
     }
 }

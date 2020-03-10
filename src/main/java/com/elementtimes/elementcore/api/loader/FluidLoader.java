@@ -1,175 +1,66 @@
 package com.elementtimes.elementcore.api.loader;
 
 import com.elementtimes.elementcore.api.ECModElements;
-import com.elementtimes.elementcore.api.ECUtils;
-import com.elementtimes.elementcore.api.LoaderHelper;
 import com.elementtimes.elementcore.api.annotation.ModFluid;
-import com.elementtimes.elementcore.api.template.fluid.AbstractFluid;
-import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import net.minecraft.block.FlowingFluidBlock;
+import com.elementtimes.elementcore.api.helper.FindOptions;
+import com.elementtimes.elementcore.api.helper.ObjHelper;
+import com.elementtimes.elementcore.api.helper.RefHelper;
+import net.minecraft.block.Block;
 import net.minecraft.fluid.FlowingFluid;
 import net.minecraft.fluid.Fluid;
+import net.minecraft.item.Item;
+import net.minecraftforge.forgespi.language.ModFileScanData;
 
-import java.util.*;
+import java.lang.annotation.ElementType;
+import java.util.Map;
+import java.util.function.Supplier;
 
 public class FluidLoader {
 
-    private boolean isFluidLoaded = false;
-    private boolean isFluidTagLoaded = false;
-    private boolean isFluidGroupLoaded = false;
-    private boolean isFluidBurningTimeLoaded = false;
-    private boolean isFluidBlockLoaded = false;
-    private boolean isGasLoaded = false;
-    private ECModElements mElements;
-
-    Map<String, FlowingFluid> fluids = new HashMap<>();
-    Map<String, List<FlowingFluid>> groups = new HashMap<>();
-    Map<String, List<Fluid>> tags = new HashMap<>();
-    Map<String, List<Fluid>> tagItems = new HashMap<>();
-    Object2IntMap<FlowingFluid> burningTimes = new Object2IntArrayMap<>();
-    Map<FlowingFluid, FlowingFluidBlock> blocks = new HashMap<>();
-    List<FlowingFluid> gas = new ArrayList<>();
-
-    public FluidLoader(ECModElements elements) {
-        mElements = elements;
+    public static void load(ECModElements elements) {
+        loadFluid(elements);
     }
 
-    public Map<String, FlowingFluid> fluids() {
-        if (!isFluidLoaded) {
-            mElements.elements.load();
-            loadFluids();
-        }
-        return fluids;
-    }
-
-    private void loadFluids() {
-        LoaderHelper.stream(mElements, ModFluid.class).forEach(data -> {
-            String className = data.getClassType().getClassName();
-            LoaderHelper.loadClass(mElements, className).ifPresent(clazz -> {
-                String memberName = data.getMemberName();
-                ECUtils.reflect.getField(clazz, memberName, null, FlowingFluid.class, mElements.logger).ifPresent(fluid -> {
-                    LoaderHelper.regName(mElements, fluid, LoaderHelper.getDefault(data, memberName));
-                    fluids.put(className + "." + memberName, fluid);
-                });
-            });
-        });
-        isFluidLoaded = true;
-    }
-
-    public Map<String, List<FlowingFluid>> groups() {
-        if (!isFluidGroupLoaded) {
-            loadFluidGroups();
-        }
-        return groups;
-    }
-
-    private void loadFluidGroups() {
-        if (!isFluidLoaded) {
-            loadFluids();
-        }
-        LoaderHelper.stream(mElements, ModFluid.ItemGroup.class).forEach(data -> LoaderHelper.getFluid(mElements, data.getClassType().getClassName(), data.getMemberName()).ifPresent(fluid -> {
-            groups.computeIfAbsent(LoaderHelper.getDefault(data), (s) -> new ArrayList<>()).add(fluid);
-        }));
-        isFluidLoaded = true;
-    }
-
-    public Object2IntMap<FlowingFluid> burningTimes() {
-        if (!isFluidBurningTimeLoaded) {
-            loadFluidBurningTimes();
-        }
-        return burningTimes;
-    }
-
-    private void loadFluidBurningTimes() {
-        if (!isFluidLoaded) {
-            loadFluids();
-        }
-        LoaderHelper.stream(mElements, ModFluid.BurningTime.class).forEach(data -> LoaderHelper.getFluid(mElements, data.getClassType().getClassName(), data.getMemberName()).ifPresent(fluid -> {
-            burningTimes.put(fluid, (int) LoaderHelper.getDefault(data));
-        }));
-        isFluidBurningTimeLoaded = true;
-    }
-
-    public Map<String, List<Fluid>> tags() {
-        if (!isFluidTagLoaded) {
-            loadFluidTags();
-        }
-        return tags;
-    }
-
-    public Map<String, List<Fluid>> tagItems() {
-        if (!isFluidTagLoaded) {
-            loadFluidTags();
-        }
-        return tagItems;
-    }
-
-    private void loadFluidTags() {
-        if (!isFluidLoaded) {
-            loadFluids();
-        }
-        LoaderHelper.stream(mElements, ModFluid.Tags.class).forEach(data -> {
-            String memberName = data.getMemberName();
-            LoaderHelper.getFluid(mElements, data.getClassType().getClassName(), memberName).ifPresent(fluid -> {
-                List<String> tagText = LoaderHelper.getDefault(data, Collections.singletonList("forge:" + memberName));
-                if ((boolean) data.getAnnotationData().getOrDefault("item", true)) {
-                    for (String tag : tagText) {
-                        tags.computeIfAbsent(tag, (s) -> new ArrayList<>()).add(fluid);
-                        tagItems.computeIfAbsent(tag, (s) -> new ArrayList<>()).add(fluid);
-                    }
+    private static void loadFluid(ECModElements elements) {
+        ObjHelper.stream(elements, ModFluid.class).forEach(data -> {
+            FindOptions option = new FindOptions().withReturns(Fluid.class).withTypes(ElementType.FIELD);
+            ObjHelper.find(elements, data, option).ifPresent(fluid -> {
+                if (fluid instanceof FlowingFluid) {
+                    FlowingFluid f = (FlowingFluid) fluid;
+                    addFluid(data, elements, f.getStillFluid(), f.getFlowingFluid());
                 } else {
-                    for (String tag : tagText) {
-                        tags.computeIfAbsent(tag, (s) -> new ArrayList<>()).add(fluid);
-                    }
+                    addFluid(data, elements, (Fluid) fluid, null);
                 }
-            });
-        });
-        isFluidTagLoaded = true;
-    }
-
-    public Map<FlowingFluid, FlowingFluidBlock> blocks() {
-        if (!isFluidBlockLoaded) {
-            loadBlocks();
-        }
-        return blocks;
-    }
-
-    private void loadBlocks() {
-        if (!isFluidLoaded) {
-            loadFluids();
-        }
-        LoaderHelper.stream(mElements, ModFluid.Block.class).forEach(data -> {
-            LoaderHelper.getFluid(mElements, data.getClassType().getClassName(), data.getMemberName()).ifPresent(fluid -> {
-                LoaderHelper.loadClass(mElements, LoaderHelper.getDefault(data)).ifPresent(aClass -> {
-                    ECUtils.reflect.create(aClass, new Object[]{fluid}, FlowingFluidBlock.class, mElements.logger).ifPresent(block -> {
-                        blocks.put(fluid, block);
-                        if (fluid instanceof AbstractFluid) {
-                            ((AbstractFluid) fluid).setFluidBlock(block);
-                        }
-                    });
+                Supplier<Block> blockSupplier = RefHelper.getter(elements, data.getAnnotationData().get("block"), Block.class);
+                elements.fluidBlocks.add(() -> {
+                    Block block = blockSupplier.get();
+                    if (block != null) {
+                        ObjHelper.setRegisterName(block, (String) data.getAnnotationData().get("name"), data, elements);
+                    }
+                    return block;
                 });
             });
         });
-        isFluidBlockLoaded = true;
     }
 
-    public List<FlowingFluid> gas() {
-        if (!isGasLoaded) {
-            loadGas();
+    private static void addFluid(ModFileScanData.AnnotationData data, ECModElements elements, Fluid still, Fluid flowing) {
+        Map<String, Object> map = data.getAnnotationData();
+        String name = (String) map.get("name");
+        ObjHelper.setRegisterName(still, name, data, elements);
+        elements.fluids.add(still);
+        if (flowing != null && flowing != still && flowing.getRegistryName() == null) {
+            ObjHelper.setRegisterName(flowing, (String) map.get("flowingName"), still.getRegistryName().toString() + "_flowing", elements);
+            elements.fluids.add(flowing);
         }
-        return gas;
-    }
-
-    private void loadGas() {
-        if (!isFluidLoaded) {
-            loadFluids();
+        if (!(boolean) map.getOrDefault("noBucket", false)) {
+            Supplier<Item> bucket = () -> {
+                Item filledBucket = still.getFilledBucket();
+                if (filledBucket != null) {
+                    ObjHelper.setRegisterName(filledBucket, name, data, elements);
+                }
+                return filledBucket;
+            };
+            elements.fluidBuckets.add(bucket);
         }
-        LoaderHelper.stream(mElements, ModFluid.Gas.class).forEach(data -> {
-            LoaderHelper.getFluid(mElements, data.getClassType().getClassName(), data.getMemberName()).ifPresent(fluid -> {
-                gas.add(fluid);
-            });
-        });
-        isFluidLoaded = true;
     }
 }

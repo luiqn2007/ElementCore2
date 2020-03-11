@@ -7,10 +7,11 @@
     "0.4.0": "添加 Getter 和 Method 注解，作为对象和方法的引用",
     "0.4.1": "对 BaseTileEntity 和 部分注解的 bug 修复，详见 github 提交日志",
     "0.5.0": "详见 https://github.com/luiqn2007/ElementCore2/blob/1.12.2/wiki_assets/1_12_2/update/0.5.0.md",
-    "0.5.1": "修复若干 bug"
+    "0.5.1": "修复若干 bug",
+    "0.5.2": "更新build.gradle"
   },
   "promos": {
-    "1.12.2-latest": "0.5.1",
-    "1.12.2-recommended": "0.5.1"
+    "1.12.2-latest": "0.5.2",
+    "1.12.2-recommended": "0.5.2"
   }
 }

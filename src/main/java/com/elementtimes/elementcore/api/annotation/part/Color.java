@@ -1,5 +1,6 @@
 package com.elementtimes.elementcore.api.annotation.part;
 
+import com.elementtimes.elementcore.api.ECModElements;
 import com.elementtimes.elementcore.api.annotation.enums.ValueType;
 
 import java.lang.annotation.ElementType;
@@ -9,6 +10,9 @@ import java.lang.annotation.Target;
 
 /**
  * 注解到任意 Item/Block 对象中，作为方块/物品染色
+ * @see Parts#color(Object, Object, boolean, ECModElements)
+ * @see net.minecraft.client.renderer.color.IItemColor
+ * @see net.minecraft.client.renderer.color.IBlockColor
  * @author luqin2007
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -30,21 +34,24 @@ public @interface Color {
     ValueType type() default ValueType.NONE;
 
     /**
-     * 当 type == ValueType.CONST 时，选取此值
      * @return 染色值
      */
-    int color() default 0;
+    int value() default 0;
 
     /**
-     * 当 type == ValueType.METHOD 时，选取此值
+     * 该类的 type == ValueType.METHOD 时，效果比较特殊
      * 若该染色器应用于物品，则
      *  参数
-     *      ItemStack, int
+     *      {@link net.minecraft.item.ItemStack}
+     *      int
      *  返回值
      *      int
      * 若该染色器应用于方块，则
      *  参数
-     *      BlockState, IEnviromentBlockReader, BlockPos, int
+     *      {@link net.minecraft.block.BlockState}
+     *      {@link net.minecraft.world.IEnviromentBlockReader}
+     *      {@link net.minecraft.util.math.BlockPos}
+     *      int
      *  返回值
      *      int
      * @return 染色方法
@@ -52,12 +59,11 @@ public @interface Color {
     Method2 method() default @Method2;
 
     /**
-     * 当 type == ValueType.OBJECT 时，选取此值
      * 若该染色器应用于物品，则
      *  返回 {@link net.minecraft.client.renderer.color.IItemColor}
      * 若该染色器应用于方块，则
      *  返回 {@link net.minecraft.client.renderer.color.IBlockColor}
      * @return 染色对象
      */
-    Getter2 obj() default @Getter2;
+    Getter2 object() default @Getter2;
 }

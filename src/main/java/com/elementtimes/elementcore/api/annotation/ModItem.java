@@ -1,8 +1,7 @@
 package com.elementtimes.elementcore.api.annotation;
 
 import com.elementtimes.elementcore.api.annotation.part.Color;
-import com.elementtimes.elementcore.api.annotation.part.item.Properties;
-import com.elementtimes.elementcore.api.annotation.tools.Tooltips;
+import com.elementtimes.elementcore.api.annotation.part.ItemProps;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -27,9 +26,7 @@ public @interface ModItem {
      */
     String value() default "";
 
-    Properties properties() default @Properties;
+    ItemProps prop() default @ItemProps;
 
     Color color() default @Color;
-
-    Tooltips tooltips() default @Tooltips;
 }

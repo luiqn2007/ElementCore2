@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.api.annotation.result;
+package com.elementtimes.elementcore.api.misc;
 
 import net.minecraft.entity.EntityType;
 import net.minecraftforge.forgespi.language.ModFileScanData;

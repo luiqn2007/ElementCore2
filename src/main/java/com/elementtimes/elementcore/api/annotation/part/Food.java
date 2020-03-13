@@ -1,4 +1,8 @@
-package com.elementtimes.elementcore.api.annotation.part.item;
+package com.elementtimes.elementcore.api.annotation.part;
+
+import com.elementtimes.elementcore.api.ECModElements;
+import com.elementtimes.elementcore.api.annotation.enums.ValueType;
+import net.minecraft.item.Item;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -6,11 +10,14 @@ import java.lang.annotation.Target;
 
 /**
  * 用于生成 {@link net.minecraft.item.Food} 类，以供 Item 初始化
+ * @see Parts#food(Object, Item, ECModElements)
+ * @see net.minecraft.item.Food
  * @author luqin2007
  */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Food {
+
     /**
      * 回复饱食度，-1 说明该 Food 为 null，仅供占位
      * @return 饱食度

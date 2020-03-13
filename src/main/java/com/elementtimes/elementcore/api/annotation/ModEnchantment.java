@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  */
 @SuppressWarnings("unused")
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.TYPE, ElementType.CONSTRUCTOR})
+@Target({ElementType.FIELD, ElementType.TYPE})
 public @interface ModEnchantment {
 
     /**
@@ -28,7 +28,7 @@ public @interface ModEnchantment {
      * 添加附魔书
      */
     @Retention(RetentionPolicy.RUNTIME)
-    @Target({ElementType.FIELD, ElementType.TYPE, ElementType.CONSTRUCTOR})
+    @Target({ElementType.FIELD, ElementType.TYPE})
     @interface Book {
 
         /**

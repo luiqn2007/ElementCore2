@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.api.annotation.result;
+package com.elementtimes.elementcore.api.misc;
 
 import com.elementtimes.elementcore.api.ECModElements;
 import com.elementtimes.elementcore.api.interfaces.invoker.Invoker;
@@ -8,7 +8,7 @@ import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-public class SimpleMessageWrapper {
+public class NetSimpleWrapper {
 
     public static int nextIndex = 0;
 
@@ -16,7 +16,7 @@ public class SimpleMessageWrapper {
     public final VoidInvoker encoder, handler;
     public final Invoker<PacketBuffer> decoder;
 
-    public SimpleMessageWrapper(Class<?> message, VoidInvoker encoder, Invoker<PacketBuffer> decoder, VoidInvoker handler) {
+    public NetSimpleWrapper(Class<?> message, VoidInvoker encoder, Invoker<PacketBuffer> decoder, VoidInvoker handler) {
         this.message = message;
         this.encoder = encoder;
         this.decoder = decoder;

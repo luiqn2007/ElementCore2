@@ -1,15 +1,15 @@
-package com.elementtimes.elementcore.api.annotation.result;
+package com.elementtimes.elementcore.api.misc;
 
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class TerWrapper {
+public class BlockTerWrapper {
 
     public final Object ter;
     public final Class<? extends TileEntity> teClass;
 
-    public TerWrapper(Class<? extends TileEntity> teClass, Object ter) {
+    public BlockTerWrapper(Class<? extends TileEntity> teClass, Object ter) {
         if (ter instanceof net.minecraft.client.renderer.tileentity.TileEntityRenderer) {
             this.ter = ter;
         } else {

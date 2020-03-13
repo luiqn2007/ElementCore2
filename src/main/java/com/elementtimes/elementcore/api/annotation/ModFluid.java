@@ -1,7 +1,7 @@
 package com.elementtimes.elementcore.api.annotation;
 
 import com.elementtimes.elementcore.api.annotation.part.Getter;
-import net.minecraft.fluid.Fluid;
+import com.elementtimes.elementcore.api.annotation.tools.ModBurnTime;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -38,4 +38,6 @@ public @interface ModFluid {
      * 流体方块注册
      */
     Getter block() default @Getter;
+
+    ModBurnTime burnTime() default @ModBurnTime;
 }

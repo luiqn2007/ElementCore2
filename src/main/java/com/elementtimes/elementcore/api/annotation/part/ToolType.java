@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.api.annotation.part.item;
+package com.elementtimes.elementcore.api.annotation.part;
 
 import com.elementtimes.elementcore.api.annotation.part.Getter;
 

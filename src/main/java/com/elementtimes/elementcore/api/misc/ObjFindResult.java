@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.api.annotation.result;
+package com.elementtimes.elementcore.api.misc;
 
 import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.objectweb.asm.Type;
@@ -15,9 +15,9 @@ public class ObjFindResult {
     private String[] arguments;
     private String returnType;
     private String memberName;
-    private Optional<Object> result;
+    private Optional result;
 
-    public ObjFindResult(ModFileScanData.AnnotationData data, Optional<Object> result) {
+    public ObjFindResult(ModFileScanData.AnnotationData data, Optional result) {
         this.type = data.getTargetType();
         Type type = data.getClassType();
         this.className = type.getClassName();

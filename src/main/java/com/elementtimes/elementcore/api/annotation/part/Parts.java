@@ -1,17 +1,13 @@
 package com.elementtimes.elementcore.api.annotation.part;
 
 import com.elementtimes.elementcore.api.ECModElements;
-import com.elementtimes.elementcore.api.Vanilla;
 import com.elementtimes.elementcore.api.annotation.enums.ValueType;
-import com.elementtimes.elementcore.api.annotation.result.Config;
-import com.elementtimes.elementcore.api.annotation.result.EntitySpawner;
-import com.elementtimes.elementcore.api.annotation.result.FeatureWrapper;
-import com.elementtimes.elementcore.api.annotation.result.TooltipsWrapper;
 import com.elementtimes.elementcore.api.helper.ObjHelper;
 import com.elementtimes.elementcore.api.helper.RefHelper;
 import com.elementtimes.elementcore.api.interfaces.invoker.IntInvoker;
 import com.elementtimes.elementcore.api.interfaces.invoker.Invoker;
-import com.elementtimes.elementcore.api.interfaces.invoker.VoidInvoker;
+import com.elementtimes.elementcore.api.misc.BlockFeatureWrapper;
+import com.elementtimes.elementcore.api.misc.EntitySpawnWrapper;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
@@ -26,244 +22,257 @@ import net.minecraft.potion.EffectInstance;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.GenerationStage;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
 import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.IFeatureConfig;
-import net.minecraft.world.gen.feature.OreFeatureConfig;
-import net.minecraft.world.gen.placement.CountRangeConfig;
 import net.minecraft.world.gen.placement.IPlacementConfig;
 import net.minecraft.world.gen.placement.Placement;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ToolType;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.apache.commons.lang3.ArrayUtils;
 
-import java.lang.reflect.Method;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.function.ToIntFunction;
-import java.util.stream.Collectors;
 
 /**
  * 除 Getter, Method 外其他类的处理方法
  * @author luqin2007
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class Parts {
 
-    public static Supplier<Biome> biome(Map<String, Object> biomeMap, ECModElements elements) {
-        if (biomeMap == null || biomeMap.isEmpty()) {
-            return () -> Vanilla.Biomes.PLAINS;
+    /**
+     * @see com.elementtimes.elementcore.api.annotation.part.Biome
+     */
+    public static Supplier<Optional<Biome>> biome(Object biome, Object annotatedObj, ECModElements elements) {
+        Map<String, Object> map = ObjHelper.getAnnotationMap(biome);
+        if (map == null) {
+            return Optional::empty;
         }
-        switch (ObjHelper.getEnum(ValueType.class, biomeMap.get("type"), ValueType.CONST)) {
+        switch (ObjHelper.getEnum(ValueType.class, map.get("type"), ValueType.VALUE)) {
             case OBJECT:
-                Supplier<Biome> getter = RefHelper.getter(elements, biomeMap.get("getter"), Biome.class);
-                return () -> {
-                    Biome biome = getter.get();
-                    if (biome == null) {
-                        biome = Vanilla.Biomes.PLAINS;
-                    }
-                    return biome;
-                };
+                Supplier<Biome> getter = RefHelper.getter(elements, map.get("object"), Biome.class);
+                return () -> Optional.ofNullable(getter.get());
             case METHOD:
-                Invoker<Biome> invoker = RefHelper.invoker(elements, biomeMap.get("method"), (a) -> Vanilla.Biomes.PLAINS);
-                return invoker::invoke;
-            default:
-                String name = (String) biomeMap.getOrDefault("name", "plains");
+                Invoker<Biome> invoker = RefHelper.invoker(elements, map.get("method"), (a) -> null, Object.class);
+                return () -> Optional.ofNullable(invoker.invoke(annotatedObj));
+            case VALUE:
+                String name = (String) map.getOrDefault("value", "");
                 ResourceLocation location = new ResourceLocation(name);
-                return () -> ForgeRegistries.BIOMES.getValue(location);
+                return () -> Optional.ofNullable(ForgeRegistries.BIOMES.getValue(location));
+            default: return Optional::empty;
         }
     }
 
-    public static Material material(Map<String, Object> materialMap, ECModElements elements) {
-        if (materialMap == null || materialMap.isEmpty()) {
-            return Vanilla.Materials.ROCK;
+    /**
+     * @see com.elementtimes.elementcore.api.annotation.part.Material
+     */
+    public static Optional<Material> material(Object material, ECModElements elements) {
+        Map<String, Object> map = ObjHelper.getAnnotationMap(material);
+        if (map == null) {
+            return Optional.empty();
         }
-        switch (ObjHelper.getEnum(ValueType.class, materialMap.get("value"), ValueType.OBJECT)) {
+        switch (ObjHelper.getEnum(ValueType.class, map.get("type"), ValueType.OBJECT)) {
             case OBJECT:
-                Optional<? extends Material> material = RefHelper.get(elements, materialMap.get("material"), Material.class);
-                return material.isPresent() ? material.get() : Material.ROCK;
+                return RefHelper.get(elements, map.get("object"), Material.class);
             case METHOD:
-                Optional<? extends Material> material2 = RefHelper.invoke(elements, materialMap.get("material2"), Material.class, new Object[0]);
-                return material2.isPresent() ? material2.get() : Material.ROCK;
+                return RefHelper.invoke(elements, map.get("method"), Material.class, new Object[0]);
+            case VALUE:
+                MaterialColor color = MaterialColor.COLORS[MathHelper.clamp((int) map.getOrDefault("colorIndex", 11), 0, 63)];
+                boolean isLiquid = (boolean) map.getOrDefault("isLiquid", false);
+                boolean isSolid = (boolean) map.getOrDefault("isSolid", true);
+                boolean isBlockMovement = (boolean) map.getOrDefault("isBlockMovement", true);
+                boolean isOpaque = (boolean) map.getOrDefault("isOpaque", true);
+                boolean requiresTool = (boolean) map.getOrDefault("requiresTool", false);
+                boolean flammable = (boolean) map.getOrDefault("flammable", false);
+                boolean replaceable = (boolean) map.getOrDefault("replaceable", false);
+                PushReaction pushReaction = ObjHelper.getEnum(PushReaction.class, map.get("pushReaction"), PushReaction.NORMAL);
+                Material m = new Material(color, isLiquid, isSolid, isBlockMovement, isOpaque, !requiresTool, flammable, replaceable, pushReaction);
+                return Optional.of(m);
             default:
-                MaterialColor color = MaterialColor.COLORS[MathHelper.clamp((int) materialMap.getOrDefault("colorIndex", 11), 0, 63)];
-                boolean isLiquid = (boolean) materialMap.getOrDefault("isLiquid", false);
-                boolean isSolid = (boolean) materialMap.getOrDefault("isSolid", true);
-                boolean isBlockMovement = (boolean) materialMap.getOrDefault("isBlockMovement", true);
-                boolean isOpaque = (boolean) materialMap.getOrDefault("isOpaque", true);
-                boolean requiresTool = (boolean) materialMap.getOrDefault("requiresTool", false);
-                boolean flammable = (boolean) materialMap.getOrDefault("flammable", false);
-                boolean replaceable = (boolean) materialMap.getOrDefault("replaceable", false);
-                PushReaction pushReaction = ObjHelper.getEnum(PushReaction.class, materialMap.get("pushReaction"), PushReaction.NORMAL);
-                return new Material(color, isLiquid, isSolid, isBlockMovement, isOpaque, !requiresTool, flammable, replaceable, pushReaction);
+                return Optional.empty();
         }
     }
 
-    public static Block.Properties propertiesBlock(Map<String, Object> materialMap, ECModElements elements) {
-        if (materialMap == null) {
-            return Block.Properties.create(Vanilla.Materials.ROCK);
+    /**
+     * @see BlockProps
+     */
+    public static Optional<Block.Properties> propertiesBlock(Object prop, ECModElements elements) {
+        Map<String, Object> map = ObjHelper.getAnnotationMap(prop);
+        if (map == null) {
+            return Optional.empty();
         }
-        switch (ObjHelper.getEnum(ValueType.class, "type", ValueType.OBJECT)) {
+        switch (ObjHelper.getEnum(ValueType.class, map.get("type"), ValueType.OBJECT)) {
             case OBJECT:
-                return (Block.Properties) RefHelper.get(elements, materialMap.get("object"), Object.class)
+                return RefHelper.get(elements, map.get("object"), Object.class)
                         .map(obj -> obj instanceof Block ? Block.Properties.from((Block) obj) : obj)
-                        .map(obj -> obj instanceof Block.Properties ? obj : Vanilla.Properties.defaultBlock())
-                        .get();
+                        .filter(obj -> obj instanceof Block.Properties).map(o -> (Block.Properties) o);
             case METHOD:
-                return (Block.Properties) RefHelper.invoke(elements, materialMap.get("method"), Object.class, new Object[0])
+                return RefHelper.invoke(elements, map.get("method"), Object.class, new Object[0])
                         .map(obj -> obj instanceof Block ? Block.Properties.from((Block) obj) : obj)
-                        .map(obj -> obj instanceof Block.Properties ? obj : Vanilla.Properties.defaultBlock())
-                        .get();
+                        .filter(obj -> obj instanceof Block.Properties).map(o -> (Block.Properties) o);
+            case VALUE:
+                Optional<Material> materialOptional = material(map.get("material"), elements);
+                if (materialOptional.isPresent()) {
+                    Block.Properties properties;
+                    if (map.containsKey("colorIndex")) {
+                        int colorIndex = MathHelper.clamp((int) map.get("colorIndex"), 0, 63);
+                        properties = Block.Properties.create(materialOptional.get(), MaterialColor.COLORS[colorIndex]);
+                    } else if (map.containsKey("colorDye")) {
+                        int colorDye = MathHelper.clamp((int) map.get("colorDye"), 0, 15);
+                        properties = Block.Properties.create(materialOptional.get(), DyeColor.values()[colorDye]);
+                    } else {
+                        properties = Block.Properties.create(materialOptional.get());
+                    }
+                    if ((boolean) map.getOrDefault("doesNotBlockMovement", false)) {
+                        properties.doesNotBlockMovement();
+                    }
+                    Float slipperiness = (Float) map.get("slipperiness");
+                    if (slipperiness != null) {
+                        properties.slipperiness(slipperiness);
+                    }
+                    if ((boolean) map.getOrDefault("doesNotBlockMovement", false)) {
+                        properties.doesNotBlockMovement();
+                    }
+                    RefHelper.get(elements, map.get("soundType"), SoundType.class).ifPresent(properties::sound);
+                    Integer lightValue = (Integer) map.get("lightValue");
+                    if (lightValue != null) {
+                        properties.lightValue(lightValue);
+                    }
+                    Float hardness = (Float) map.get("hardness");
+                    Float resistance = (Float) map.get("resistance");
+                    if (hardness != null || resistance != null) {
+                        properties.hardnessAndResistance(hardness == null ? 0f : hardness, resistance == null ? 0f : resistance);
+                    }
+                    if ((boolean) map.getOrDefault("ticksRandomly", false)) {
+                        properties.tickRandomly();
+                    }
+                    if ((boolean) map.getOrDefault("variableOpacity", false)) {
+                        properties.variableOpacity();
+                    }
+                    if (map.containsKey("harvest")) {
+                        Map<String, Object> harvestMap = (Map<String, Object>) map.get("harvest");
+                        RefHelper.get(elements, harvestMap.get("tool"), ToolType.class).ifPresent(type -> {
+                            properties.harvestTool(type);
+                            properties.harvestLevel((int) harvestMap.getOrDefault("level", -1));
+                        });
+                    }
+                    if ((boolean) map.getOrDefault("noDrops", false)) {
+                        properties.noDrops();
+                    }
+                    RefHelper.get(elements, map.get("loot"), Block.class).ifPresent(properties::lootFrom);
+                    return Optional.of(properties);
+                }
+                return Optional.empty();
             default:
-                Material material = material((Map<String, Object>) materialMap.get("material"), elements);
-                Block.Properties properties;
-                if (materialMap.containsKey("colorIndex")) {
-                    int colorIndex = MathHelper.clamp((int) materialMap.get("colorIndex"), 0, 63);
-                    properties = Block.Properties.create(material, MaterialColor.COLORS[colorIndex]);
-                } else if (materialMap.containsKey("colorDye")) {
-                    int colorDye = MathHelper.clamp((int) materialMap.get("colorDye"), 0, 15);
-                    properties = Block.Properties.create(material, DyeColor.values()[colorDye]);
-                } else {
-                    properties = Block.Properties.create(material);
-                }
-                if ((boolean) materialMap.getOrDefault("doesNotBlockMovement", false)) {
-                    properties.doesNotBlockMovement();
-                }
-                Float slipperiness = (Float) materialMap.get("slipperiness");
-                if (slipperiness != null) {
-                    properties.slipperiness(slipperiness);
-                }
-                if ((boolean) materialMap.getOrDefault("doesNotBlockMovement", false)) {
-                    properties.doesNotBlockMovement();
-                }
-                RefHelper.get(elements, materialMap.get("soundType"), SoundType.class).ifPresent(properties::sound);
-                Integer lightValue = (Integer) materialMap.get("lightValue");
-                if (lightValue != null) {
-                    properties.lightValue(lightValue);
-                }
-                Float hardness = (Float) materialMap.get("hardness");
-                Float resistance = (Float) materialMap.get("resistance");
-                if (hardness != null || resistance != null) {
-                    properties.hardnessAndResistance(hardness == null ? 0f : hardness, resistance == null ? 0f : resistance);
-                }
-                if ((boolean) materialMap.getOrDefault("ticksRandomly", false)) {
-                    properties.tickRandomly();
-                }
-                if ((boolean) materialMap.getOrDefault("variableOpacity", false)) {
-                    properties.variableOpacity();
-                }
-                if (materialMap.containsKey("harvest")) {
-                    Map<String, Object> harvestMap = (Map<String, Object>) materialMap.get("harvest");
-                    RefHelper.get(elements, harvestMap.get("tool"), ToolType.class).ifPresent(type -> {
-                        properties.harvestTool(type);
-                        properties.harvestLevel((int) harvestMap.getOrDefault("level", -1));
-                    });
-                }
-                if ((boolean) materialMap.getOrDefault("noDrops", false)) {
-                    properties.noDrops();
-                }
-                RefHelper.get(elements, materialMap.get("loot"), Block.class).ifPresent(properties::lootFrom);
-                return properties;
+                return Optional.empty();
         }
     }
 
+    /**
+     * @see Color
+     */
     @OnlyIn(Dist.CLIENT)
-    public static Object color(Map<String, Object> colorMap, boolean forItem, ECModElements elements) {
-        if (colorMap == null) {
-            return null;
+    public static Optional<Object> color(Object color, boolean forItem, ECModElements elements) {
+        Map<String, Object> map = ObjHelper.getAnnotationMap(color);
+        if (map == null) {
+            return Optional.empty();
         }
-        switch (ObjHelper.getEnum(ValueType.class, colorMap.get("type"), ValueType.NONE)) {
-            case CONST:
-                int color = (int) colorMap.getOrDefault("color", 0);
-                return forItem
-                        ? (net.minecraft.client.renderer.color.IItemColor) (a, b) -> color
-                        : (net.minecraft.client.renderer.color.IBlockColor) (a, b, c, d) -> color;
+        switch (ObjHelper.getEnum(ValueType.class, map.get("type"), ValueType.NONE)) {
+            case VALUE:
+                int cl = (int) map.getOrDefault("value", 0);
+                Object ov = forItem
+                        ? (net.minecraft.client.renderer.color.IItemColor) (a, b) -> cl
+                        : (net.minecraft.client.renderer.color.IBlockColor) (a, b, c, d) -> cl;
+                return Optional.of(ov);
             case METHOD:
                 Class<?>[] types = forItem
                         ? new Class<?>[] {ItemStack.class, int.class}
                         : new Class<?>[] {BlockState.class, IEnviromentBlockReader.class, BlockPos.class, int.class};
-                IntInvoker invoker = RefHelper.invoker(elements, colorMap.get("method"), 0, types);
-                return forItem
+                IntInvoker invoker = RefHelper.invoker(elements, map.get("method"), 0, types);
+                Object om = forItem
                         ? (net.minecraft.client.renderer.color.IItemColor) (a, b) -> invoker.invoke(a, b)
                         : (net.minecraft.client.renderer.color.IBlockColor) (a, b, c, d) -> invoker.invoke(a, b, c, d);
+                return Optional.of(om);
             case OBJECT:
                 Class<?> type = forItem
                         ? net.minecraft.client.renderer.color.IItemColor.class
                         : net.minecraft.client.renderer.color.IBlockColor.class;
-                return RefHelper.get(elements, colorMap.get("obj"), type).orElse(null);
-            default: return null;
+                return RefHelper.get(elements, map.get("object"), type).map(o -> (Object) o);
+            default: return Optional.empty();
         }
     }
 
-    public static Food food(Map<String, Object> foodMap, ECModElements elements) {
-        if (foodMap == null) {
-            return null;
+    /**
+     * @see Food
+     */
+    public static Optional<net.minecraft.item.Food> food(Object food, ECModElements elements) {
+        Map<String, Object> map = ObjHelper.getAnnotationMap(food);
+        if (map == null) {
+            return Optional.empty();
         }
-        int hunger = (int) foodMap.getOrDefault("hunger", -1);
+        int hunger = (int) map.getOrDefault("hunger", -1);
         if (hunger == -1) {
-            return null;
+            return Optional.empty();
         }
-        Food.Builder foodBuilder = new Food.Builder().hunger(hunger).saturation((float) foodMap.getOrDefault("saturation", 0f));
-        if ((boolean) foodMap.getOrDefault("meat", false)) {
+        net.minecraft.item.Food.Builder foodBuilder =
+                new net.minecraft.item.Food.Builder().hunger(hunger).saturation((float) map.getOrDefault("saturation", 0f));
+        if ((boolean) map.getOrDefault("meat", false)) {
             foodBuilder.meat();
         }
-        if ((boolean) foodMap.getOrDefault("alwaysEdible", false)) {
+        if ((boolean) map.getOrDefault("alwaysEdible", false)) {
             foodBuilder.setAlwaysEdible();
         }
-        if ((boolean) foodMap.getOrDefault("fastToEat", false)) {
+        if ((boolean) map.getOrDefault("fastToEat", false)) {
             foodBuilder.fastToEat();
         }
-        List<Map<String, Object>> effects = (List<Map<String, Object>>) foodMap.getOrDefault("effect", Collections.emptyList());
-        for (Map<String, Object> map : effects) {
-            EffectInstance effectInstance = effectInstance((Map<String, Object>) map.get("instance"), elements);
-            float probability = (float) map.getOrDefault("probability", 1f);
-            foodBuilder.effect(effectInstance, probability);
+        List<Map<String, Object>> effects = (List<Map<String, Object>>) map.getOrDefault("effect", Collections.emptyList());
+        for (Map<String, Object> e : effects) {
+            effectInstance(e.get("instance"), elements).ifPresent(effectInstance -> {
+                float probability = (float) e.getOrDefault("probability", 1f);
+                foodBuilder.effect(effectInstance, probability);
+            });
         }
-        return foodBuilder.build();
+        return Optional.of(foodBuilder.build());
     }
 
-    public static Item.Properties propertiesItem(Map<String, Object> propertiesMap, ECModElements elements) {
+    /**
+     * @see ItemProps
+     */
+    public static Optional<Item.Properties> propertiesItem(Object prop, ECModElements elements) {
+        Map<String, Object> map = ObjHelper.getAnnotationMap(prop);
+        if (map == null) {
+            return Optional.empty();
+        }
         Item.Properties properties = new Item.Properties();
-        if (propertiesMap == null || propertiesMap.isEmpty()) {
-            return properties;
-        }
-        Food food;
-        Optional<? extends Food> foodOpt = RefHelper.get(elements, propertiesMap.get("foodGetter"), Food.class);
-        if (foodOpt.isPresent()) {
-            food = foodOpt.get();
+        Optional<net.minecraft.item.Food> food = RefHelper.get(elements, map.get("foodGetter"), net.minecraft.item.Food.class);
+        if (food.isPresent()) {
+            properties.food(food.get());
         } else {
-            food = food((Map<String, Object>) propertiesMap.get("food"), elements);
+            food(map.get("food"), elements).ifPresent(properties::food);
         }
-        properties.food(food);
-        if (propertiesMap.containsKey("maxStackSize")) {
-            properties.maxStackSize((int) propertiesMap.get("maxStackSize"));
-        }
-        if (propertiesMap.containsKey("maxDamage")) {
-            int maxDamage = (int) propertiesMap.get("maxDamage");
+        if (map.containsKey("maxDamage")) {
+            int maxDamage = (int) map.get("maxDamage");
             if (maxDamage != -1) {
                 properties.maxDamage(maxDamage);
             }
         }
-        if (propertiesMap.containsKey("containerItem")) {
-            RefHelper.get(elements, propertiesMap.get("containerItem"), Item.class).ifPresent(properties::containerItem);
+        if (map.containsKey("containerItem")) {
+            RefHelper.get(elements, map.get("containerItem"), Item.class).ifPresent(properties::containerItem);
         }
-        RefHelper.get(elements, propertiesMap.get("group"), ItemGroup.class).ifPresent(properties::group);
-        if (propertiesMap.containsKey("rarity")) {
-            properties.rarity(ObjHelper.getEnum(Rarity.class, propertiesMap.get("rarity"), Rarity.COMMON));
+        RefHelper.get(elements, map.get("group"), ItemGroup.class).ifPresent(properties::group);
+        if (map.containsKey("rarity")) {
+            properties.rarity(ObjHelper.getEnum(Rarity.class, map.get("rarity"), Rarity.COMMON));
         }
-        if (propertiesMap.containsKey("noRepair") && (boolean) propertiesMap.getOrDefault("noRepair", false)) {
+        if (map.containsKey("noRepair") && (boolean) map.getOrDefault("noRepair", false)) {
             properties.setNoRepair();
         }
-        if (propertiesMap.containsKey("toolType")) {
-            List<Map<String, Object>> types = (List<Map<String, Object>>) propertiesMap.getOrDefault("toolType", Collections.emptyList());
+        if (map.containsKey("toolType")) {
+            List<Map<String, Object>> types = (List<Map<String, Object>>) map.getOrDefault("toolType", Collections.emptyList());
             for (Map<String, Object> typeMap : types) {
                 RefHelper.get(elements, typeMap.get("tool"), ToolType.class).ifPresent(type -> {
                     int level = (int) typeMap.getOrDefault("level", 0);
@@ -271,131 +280,105 @@ public class Parts {
                 });
             }
         }
-        if (propertiesMap.containsKey("teisr")) {
-            Supplier<Object> teisr = RefHelper.getterOrNull(elements, propertiesMap.get("teisr"), Object.class);
+        if (map.containsKey("teisr")) {
+            Supplier<Object> teisr = RefHelper.getterOrNull(elements, map.get("teisr"), Object.class);
             if (teisr != null) {
                 properties.setTEISR(() -> () -> (net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer) teisr.get());
             }
         }
-        return properties;
+        return Optional.of(properties);
     }
 
-    public static ToIntFunction<ItemStack> burnTime(Map<String, Object> burnMap, Object applyTo, ECModElements elements) {
-        int defValue = (int) burnMap.get("value");
-        List<HashMap<String, Object>> subTimes = (List<HashMap<String, Object>>) burnMap.get("sub");
-        boolean hasSubTime = subTimes != null && !subTimes.isEmpty();
-        return stack -> {
-            if (hasSubTime) {
-                for (HashMap<String, Object> map : subTimes) {
-                    int[] acceptMeta = (int[]) map.getOrDefault("damage", new int[0]);
-                    if (acceptMeta.length == 0 || ArrayUtils.contains(acceptMeta, stack.getDamage())) {
-                        int defBurnTime = (int) map.getOrDefault("value", -1);
-                        if (defBurnTime < 0) {
-                            HashMap<String, Object> methodMap = (HashMap<String, Object>) map.get("method");
-                            return RefHelper.invoke(elements, methodMap, -1, new Object[]{stack}, ItemStack.class);
-                        }
-                        return defBurnTime;
-                    }
-                }
-            }
-            return defValue;
-        };
-    }
-
-    public static EffectInstance effectInstance(Map<String, Object> effectMap, ECModElements elements) {
-        Optional<? extends Effect> effectOpt = RefHelper.get(elements, effectMap.get("effect"), Effect.class);
+    /**
+     * @see com.elementtimes.elementcore.api.annotation.part.EffectInstance
+     */
+    public static Optional<EffectInstance> effectInstance(Object effect, ECModElements elements) {
+        Map<String, Object> map = ObjHelper.getAnnotationMap(effect);
+        if (map == null) {
+            return Optional.empty();
+        }
+        Optional<? extends Effect> effectOpt = RefHelper.get(elements, map.get("effect"), Effect.class);
         if (effectOpt.isPresent()) {
-            Effect effect = effectOpt.get();
-            int duration = (int) effectMap.getOrDefault("duration", 0);
-            int amplifier = (int) effectMap.getOrDefault("amplifier", 0);
-            boolean ambient = (boolean) effectMap.getOrDefault("ambient", false);
-            boolean showParticles = (boolean) effectMap.getOrDefault("showParticles", true);
-            return new EffectInstance(effect, duration, amplifier, ambient, showParticles);
+            Effect e = effectOpt.get();
+            int duration = (int) map.getOrDefault("duration", 0);
+            int amplifier = (int) map.getOrDefault("amplifier", 0);
+            boolean ambient = (boolean) map.getOrDefault("ambient", false);
+            boolean showParticles = (boolean) map.getOrDefault("showParticles", true);
+            EffectInstance instance = new EffectInstance(e, duration, amplifier, ambient, showParticles);
+            return Optional.of(instance);
         }
-        return null;
+        return Optional.empty();
     }
 
-    public static Runnable invoker(Map<String, Object> invokerMap, Class<?> holder) {
-        try {
-            Method method = holder.getDeclaredMethod((String) invokerMap.get("value"));
-            method.setAccessible(true);
-            return () -> {
-                try {
-                    method.invoke(null);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            };
-        } catch (NoSuchMethodException e) {
-            return () -> {};
+    /**
+     * @see EntitySpawn
+     */
+    public static Optional<EntitySpawnWrapper> entitySpawn(Object spawn, Object annotatedObj, EntityType<?> type, Biome defBiome, ECModElements elements) {
+        Map<String, Object> map = ObjHelper.getAnnotationMap(spawn);
+        if (map == null || type == null) {
+            return Optional.empty();
         }
-    }
-
-    public static List<ResourceLocation> tag(Map<String, Object> tagMap, String namespace) {
-        return ((List<String>) tagMap.getOrDefault("value", Collections.emptyList())).stream()
-                .map(s -> s.contains(":") ? new ResourceLocation(s) : new ResourceLocation(namespace, s))
-                .collect(Collectors.toList());
-    }
-
-    public static TooltipsWrapper tooltips(Map<String, Object> tooltipsMap, Predicate<ItemTooltipEvent> check, ECModElements elements) {
-        if (tooltipsMap == null || tooltipsMap.isEmpty()) {
-            return null;
-        }
-        Consumer<ItemTooltipEvent> tooltips;
-        if (ObjHelper.getEnum(ValueType.class, tooltipsMap.get("type"), ValueType.CONST) == ValueType.METHOD) {
-            VoidInvoker invoker = RefHelper.invoker(elements, tooltipsMap.get("method"), ItemTooltipEvent.class);
-            tooltips = invoker::invoke;
-        } else {
-            List<String> tooltipList = (List<String>) tooltipsMap.getOrDefault("value", Collections.emptyList());
-            List<TranslationTextComponent> list = tooltipList.stream().map(t -> new TranslationTextComponent(t)).collect(Collectors.toList());
-            tooltips = event -> event.getToolTip().addAll(list);
-        }
-        return new TooltipsWrapper(tooltips, check);
-    }
-
-    public static EntitySpawner entitySpawn(Map<String, Object> spawnMap, EntityType<?> type, ECModElements elements) {
-        int weight = (int) spawnMap.getOrDefault("weight", 10);
-        int min = (int) spawnMap.getOrDefault("minCount", 4);
-        int max = (int) spawnMap.getOrDefault("maxCount", 4);
+        Supplier<Optional<Biome>> biome = biome(map.get("biome"), annotatedObj, elements);
+        int weight = (int) map.getOrDefault("weight", 10);
+        int min = (int) map.getOrDefault("minCount", 4);
+        int max = (int) map.getOrDefault("maxCount", 4);
         Biome.SpawnListEntry entry = new Biome.SpawnListEntry(type, weight, min, max);
-        Supplier<Biome> biome = biome((Map<String, Object>) spawnMap.get("biome"), elements);
-        EntityClassification classification = ObjHelper.getEnum(EntityClassification.class, "classification", EntityClassification.CREATURE);
-        return new EntitySpawner(entry, biome, classification);
+        EntityClassification classification = ObjHelper.getEnum(EntityClassification.class, map.get("classification"), EntityClassification.CREATURE);
+        return Optional.of(new EntitySpawnWrapper(entry, biome, classification));
     }
 
-    public static FeatureWrapper feature(Map<String, Object> featureMap, Block block, ECModElements elements) {
-        if (featureMap == null || featureMap.isEmpty()) {
-            return new FeatureWrapper(() -> null, null, null);
+    /**
+     * @see com.elementtimes.elementcore.api.annotation.part.Feature
+     */
+    public static Optional<BlockFeatureWrapper> feature(Object feature, Object annotatedObj, ECModElements elements, Supplier<Collection<Block>> blocks) {
+        Map<String, Object> map = ObjHelper.getAnnotationMap(feature);
+        if (map == null) {
+            return Optional.empty();
         }
-        Supplier<Biome> biome = biome((Map<String, Object>) featureMap.get("biome"), elements);
-        GenerationStage.Decoration decoration = ObjHelper.getEnum(GenerationStage.Decoration.class, featureMap.get("decoration"), GenerationStage.Decoration.UNDERGROUND_ORES);
-        switch (ObjHelper.getEnum(ValueType.class, featureMap.get("type"), ValueType.CONST)) {
+        Supplier<Optional<Biome>> biome = biome(map.get("biome"), annotatedObj, elements);
+        GenerationStage.Decoration decoration = ObjHelper.getEnum(GenerationStage.Decoration.class, map.get("decoration"), GenerationStage.Decoration.UNDERGROUND_ORES);
+        switch (ObjHelper.getEnum(ValueType.class, map.get("type"), ValueType.VALUE)) {
             case OBJECT:
-                Supplier<ConfiguredFeature> getter = RefHelper.getter(elements, featureMap.get("getter"), ConfiguredFeature.class);
-                return new FeatureWrapper(biome, decoration, getter);
+                Supplier<ConfiguredFeature> getterObj = RefHelper.getter(elements, map.get("getter"), ConfiguredFeature.class);
+                Supplier<ConfiguredFeature[]> getterArr = RefHelper.getter(elements, map.get("getter"), ConfiguredFeature[].class);
+                return Optional.of(new BlockFeatureWrapper(biome, decoration, () -> {
+                    ConfiguredFeature<?> f = getterObj.get();
+                    if (f != null) {
+                        return new ConfiguredFeature[] {f};
+                    } else {
+                        return getterArr.get();
+                    }
+                }));
             case METHOD:
-                Invoker<ConfiguredFeature<?>> invoker = RefHelper.invoker(elements, featureMap.get("method"), (a) -> {
-                    OreFeatureConfig featureConfig = (OreFeatureConfig) Vanilla.Features.featureConfig((Block) a[0]);
-                    CountRangeConfig placementConfig = (CountRangeConfig) Vanilla.Placements.placementConfig((Block) a[0], Placement.COUNT_RANGE);
-                    return Biome.createDecoratedFeature(Feature.ORE, featureConfig, Placement.COUNT_RANGE, placementConfig);
-                }, Block.class);
-                return new FeatureWrapper(biome, decoration, () -> invoker.invoke(block));
-            default:
-                Supplier<Feature> featureSupplier = RefHelper.getter(elements, featureMap.get("feature"), Feature.class);
-                Invoker<IFeatureConfig> featureConfigInvoker = RefHelper.invoker(elements, featureMap.get("featureConfig"), (a) -> null, Block.class);
-                Supplier<Placement> placementSupplier = RefHelper.getter(elements, featureMap.get("placement"), Placement.class);
-                Invoker<IPlacementConfig> placementConfigInvoker = RefHelper.invoker(elements, featureMap.get("placementConfig"), (a) -> null, Block.class, Placement.class);
-                return new FeatureWrapper(biome, decoration, () -> {
-                    Feature feature = featureSupplier.get();
-                    feature = feature == null ? Vanilla.Features.ORE : feature;
-                    IFeatureConfig featureConfig = featureConfigInvoker.invoke(block);
-                    featureConfig = featureConfig == null ? Vanilla.Features.featureConfig(block) : featureConfig;
-                    Placement placement = placementSupplier.get();
-                    placement = placement == null ? Vanilla.Placements.COUNT_RANGE : placement;
-                    IPlacementConfig placementConfig = placementConfigInvoker.invoke(block, placement);
-                    placementConfig = placementConfig == null ? Vanilla.Placements.placementConfig(block, placement) : placementConfig;
-                    return Biome.createDecoratedFeature(feature, featureConfig, placement, placementConfig);
+                Invoker<ConfiguredFeature<?>> invokerObj = RefHelper.invoker(elements, map.get("method"), (a) -> null, Object.class);
+                Invoker<ConfiguredFeature<?>[]> invokerArr = RefHelper.invoker(elements, map.get("method"), (a) -> null, Object.class);
+                return Optional.of(new BlockFeatureWrapper(biome, decoration, () -> {
+                    ConfiguredFeature<?> f = invokerObj.invoke(annotatedObj);
+                    if (f != null) {
+                        return new ConfiguredFeature[] {f};
+                    } else {
+                        return invokerArr.invoke(annotatedObj);
+                    }
+                }));
+            case VALUE:
+                Supplier<Feature> featureSupplier = RefHelper.getter(elements, map.get("feature"), Feature.class);
+                Invoker<IFeatureConfig> featureConfigInvoker = RefHelper.invoker(elements, map.get("featureConfig"), (a) -> null, Block.class, Feature.class);
+                Supplier<Placement> placementSupplier = RefHelper.getter(elements, map.get("placement"), Placement.class);
+                Invoker<IPlacementConfig> placementConfigInvoker = RefHelper.invoker(elements, map.get("placementConfig"), (a) -> null, Block.class, Placement.class);
+                BlockFeatureWrapper wrapperFeature = new BlockFeatureWrapper(biome, decoration, () -> {
+                    List<ConfiguredFeature> list = new ArrayList<>();
+                    for (Block block : blocks.get()) {
+                        Feature f = featureSupplier.get();
+                        Placement placement = placementSupplier.get();
+                        IFeatureConfig featureConfig = featureConfigInvoker.invoke(block, f);
+                        IPlacementConfig placementConfig = placementConfigInvoker.invoke(block, placement);
+                        list.add(Biome.createDecoratedFeature(f, featureConfig, placement, placementConfig));
+                    }
+                    return list.toArray(new ConfiguredFeature[0]);
                 });
+                return Optional.of(wrapperFeature);
+            default: return Optional.empty();
+
         }
     }
 }

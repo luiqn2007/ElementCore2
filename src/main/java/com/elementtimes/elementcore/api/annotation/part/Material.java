@@ -1,9 +1,8 @@
-package com.elementtimes.elementcore.api.annotation.part.block;
+package com.elementtimes.elementcore.api.annotation.part;
 
+import com.elementtimes.elementcore.api.ECModElements;
 import com.elementtimes.elementcore.api.Vanilla;
 import com.elementtimes.elementcore.api.annotation.enums.ValueType;
-import com.elementtimes.elementcore.api.annotation.part.Getter;
-import com.elementtimes.elementcore.api.annotation.part.Method;
 import net.minecraft.block.material.PushReaction;
 
 import java.lang.annotation.Retention;
@@ -12,36 +11,26 @@ import java.lang.annotation.Target;
 
 /**
  * 代表一个方块材质
+ * 返回一个 {@link java.util.Optional<net.minecraft.block.material.Material>}
+ * @see net.minecraft.block.material.Material
+ * @see Parts#material(Object, net.minecraft.block.Block, ECModElements)
  * @author luqin2007
  */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Material {
 
-    /**
-     * ValueType.OBJECT
-     *  使用 material 属性
-     * ValueType.METHOD
-     *  使用 material2 属性
-     * 其他
-     *  使用注解中其他属性进行创建
-     * @return 获取方式
-     */
     ValueType type() default ValueType.OBJECT;
 
-    /**
-     * 当 type == ValueType.OBJECT 时，使用该属性
-     * 返回一个 {@link net.minecraft.block.material.Material} 对象
-     * @return 材质
-     */
-    Getter material() default @Getter(value = Vanilla.Materials.class, name = "ROCK");
+    Getter object() default @Getter;
 
     /**
-     * 当 type == ValueType.METHOD 时，使用该属性
-     * 返回一个 {@link net.minecraft.block.material.Material} 对象
-     * @return 材质
+     * 参数
+     *  无
+     * 返回值
+     *  {@link net.minecraft.block.material.Material}
      */
-    Method material2() default @Method(value = Vanilla.Materials.class, name = "defaultValue");
+    Method method() default @Method;
 
     /**
      * 可选范围 0-63

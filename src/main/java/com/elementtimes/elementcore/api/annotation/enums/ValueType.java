@@ -6,19 +6,22 @@ package com.elementtimes.elementcore.api.annotation.enums;
  */
 public enum ValueType {
     /**
-     * 选择某常值
+     * 直接使用某参数值或根据注解其他参数值实例化特定实例
      */
-    CONST,
+    VALUE(),
+
     /**
-     * 选择某方法
+     * 如无特殊说明，使用 method 属性获取对应值，参数为被注解对象
      */
     METHOD,
+
     /**
-     * 选择某对象
+     * 如无特殊说明，使用 object 属性获取对应值
      */
     OBJECT,
+
     /**
-     * 未设定
+     * 无值。若不可为无，使用默认值
      */
     NONE
 }

@@ -1,7 +1,6 @@
-package com.elementtimes.elementcore.api.annotation.part.item;
+package com.elementtimes.elementcore.api.annotation.part;
 
-import com.elementtimes.elementcore.api.annotation.part.Getter;
-import com.elementtimes.elementcore.api.annotation.part.Getter2;
+import com.elementtimes.elementcore.api.ECModElements;
 import net.minecraft.item.Rarity;
 
 import java.lang.annotation.Retention;
@@ -9,12 +8,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 用于创建一个 Item.Properties
+ * 用于创建一个 Item.BlockProps
+ * @see Parts#propertiesItem(Object, ECModElements)
+ * @see net.minecraft.block.Block.Properties
  * @author luqin2007
  */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Properties {
+public @interface ItemProps {
     /**
      * 获取一个 Food 类，表示该w物品为食物
      * @return Food 类实例

@@ -1,4 +1,4 @@
-package com.elementtimes.elementcore.api.annotation.result;
+package com.elementtimes.elementcore.api.misc;
 
 import com.elementtimes.elementcore.api.ECModContainer;
 import net.minecraftforge.api.distmarker.Dist;

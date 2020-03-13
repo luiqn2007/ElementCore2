@@ -1,11 +1,11 @@
-package com.elementtimes.elementcore.api.annotation.result;
+package com.elementtimes.elementcore.api.misc;
 
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 
 import java.util.function.Supplier;
 
-public class CapabilityData {
+public class CapabilityWrapper {
     public final Class typeInterface;
     public final Capability.IStorage storage;
     public final Supplier<Object> factory;
@@ -14,7 +14,7 @@ public class CapabilityData {
         return factory.get();
     }
 
-    public CapabilityData(Class<?> t, Capability.IStorage s, Supplier<Object> f) {
+    public CapabilityWrapper(Class<?> t, Capability.IStorage s, Supplier<Object> f) {
         typeInterface = t;
         storage = s;
         factory = f;

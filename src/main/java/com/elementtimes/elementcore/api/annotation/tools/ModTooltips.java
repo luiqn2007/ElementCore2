@@ -10,7 +10,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 物品燃烧时间
+ * 注册一个 ItemStack 的 Tooltip
  * 根据被注解内容增加 Predicate
  *  IItemProvider   只应用于持有该物品的 ItemStack
  *  Fluid           只应用于存有该流体的 ItemStack
@@ -23,29 +23,24 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE})
-public @interface ModBurnTime {
-    /**
-     * 燃烧时间获取方法
-     * ValueType.NONE   不使用，直接使用默认值
-     */
+public @interface ModTooltips {
+
     ValueType type() default ValueType.VALUE;
 
-    /**
-     * 燃烧时间
-     */
-    int value() default 0;
+    String[] value() default {};
 
     /**
-     * 获取一个 Integer
-     * 用处不大，为了枚举都有用吧
+     * 返回一个 String, String[], Collection<String>, ITextComponent, ITextComponent[] 或 Collection<ITextComponent>
      */
-    Getter object() default @Getter();
+    Getter object() default @Getter;
 
     /**
+     * 对物品栈 ModTooltips 的详细设定
      * 参数
-     *  FurnaceFuelBurnTimeEvent
+     *  {@link net.minecraftforge.event.entity.player.ItemTooltipEvent}
      * 返回值
      *  无
+     * @return Tooltip 获取器
      */
     Method method() default @Method;
 }

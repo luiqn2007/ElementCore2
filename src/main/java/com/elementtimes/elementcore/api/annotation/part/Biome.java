@@ -1,44 +1,40 @@
 package com.elementtimes.elementcore.api.annotation.part;
 
+import com.elementtimes.elementcore.api.ECModElements;
 import com.elementtimes.elementcore.api.Vanilla;
 import com.elementtimes.elementcore.api.annotation.enums.ValueType;
-import net.minecraft.world.gen.GenerationStage;
-import net.minecraft.world.gen.feature.IFeatureConfig;
-import net.minecraft.world.gen.placement.IPlacementConfig;
-import net.minecraft.world.gen.placement.Placement;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.function.Supplier;
 
 /**
  * 代表一个方块材质
+ * 该注解返回一个 {@link java.util.function.Supplier<net.minecraft.world.biome.Biome>}
+ * @see net.minecraft.world.biome.Biome
+ * @see Parts#biome(Object, Object, Supplier, ECModElements)
  * @author luqin2007
  */
 @Target({})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Biome {
 
-    /**
-     * METHOD
-     *  通过 method 属性获取
-     * OBJECT
-     *  通过 getter 属性获取
-     * 其他
-     *  通过 name 属性构建 ResourceLocation 获取
-     *  {@link net.minecraftforge.registries.ForgeRegistries#BIOMES}
-     */
-    ValueType type() default ValueType.CONST;
+    ValueType type() default ValueType.VALUE;
 
-    Getter getter() default @Getter(value = Vanilla.Biomes.class, name = "PLAINS");
+    Getter object() default @Getter;
 
     /**
      * 参数
-     *  无
+     *  {@link Object} 被注解对象，可能为 Entity 或 Block，也可能为 Class
      * 返回值
-     *  Biome
+     *  {@link net.minecraft.world.biome.Biome}
      */
-    Method method() default @Method(value = Vanilla.Biomes.class, name = "plains");
+    Method method() default @Method;
 
-    String name() default "plains";
+    /**
+     * 由此创建 ResourceLocation 寻找 Biome
+     * @see net.minecraftforge.registries.ForgeRegistries#BIOMES
+     */
+    String value() default "";
 }

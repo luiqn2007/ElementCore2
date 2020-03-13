@@ -4,7 +4,7 @@ import com.elementtimes.elementcore.api.annotation.part.EntitySpawn;
 import com.elementtimes.elementcore.api.annotation.part.Getter;
 import com.elementtimes.elementcore.api.annotation.part.Method;
 import com.elementtimes.elementcore.api.annotation.part.Method2;
-import com.elementtimes.elementcore.api.annotation.part.item.Properties;
+import com.elementtimes.elementcore.api.annotation.part.ItemProps;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
 
@@ -63,8 +63,8 @@ public @interface ModEntity {
     /**
      * 客户端实体生成
      * 参数：
-     *  FMLPlayMessages.SpawnEntity spawnEntity
-     *  World world
+     *  FMLPlayMessages.SpawnEntity
+     *  World
      * 返回值：
      *  Entity
      */
@@ -109,8 +109,8 @@ public @interface ModEntity {
 
     /**
      * 为该实体创建一个怪物蛋
-     * 该注解应配合 ModEntity 或 ModEntity.Type 注解使用
-     * 若不与这两个注解配合使用，应当重写 getter 属性，返回一个 EntityType 对象
+     * 该注解应配合 ModEntity 注解使用，或注解到一个 EntityType 对象上
+     * 若不与这个注解配合使用且注解到一个 Entity 类上，应当重写 getter 属性，返回一个 EntityType 对象
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.TYPE, ElementType.FIELD})
@@ -123,7 +123,7 @@ public @interface ModEntity {
 
         int primaryColor() default 0x00000000;
         int secondaryColor() default 0x00000000;
-        Properties properties() default @Properties;
+        ItemProps properties() default @ItemProps;
 
         /**
          * 若被注解对象没有被 ModEntity 或 ModEntity.Type 注解注册，使用该属性获取一个 EntityType 对象

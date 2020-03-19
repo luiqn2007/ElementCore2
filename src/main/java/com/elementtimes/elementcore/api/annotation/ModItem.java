@@ -10,8 +10,7 @@ import java.lang.annotation.Target;
 
 /**
  * 物品
- * 当应用于一个类时，该类应当继承自 Item，且存在一个无参或只有一个 Item.Properties 参数的构造函数
- * 此时，使用 properties 参数创建 Properties
+ * 当应用于一个类时，该类应当继承自 Item，且存在一个无参构造
  * @see net.minecraft.item.Item
  * @see net.minecraft.item.Item.Properties
  * @author luqin2007
@@ -25,8 +24,6 @@ public @interface ModItem {
      * RegistryName
      */
     String value() default "";
-
-    ItemProps prop() default @ItemProps;
 
     Color color() default @Color;
 }

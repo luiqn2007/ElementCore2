@@ -13,6 +13,8 @@ import java.lang.annotation.Target;
  *      {@link com.mojang.brigadier.tree.CommandNode<net.minecraft.command.CommandSource>}
  *  或
  *      {@link com.mojang.brigadier.builder.LiteralArgumentBuilder<net.minecraft.command.CommandSource>}
+ * 一般来说，通过 Commands.literal 方法创建
+ * @see net.minecraft.command.Commands#literal(String)
  * @author luqin2007
  */
 @Retention(RetentionPolicy.RUNTIME)

@@ -26,9 +26,11 @@ public @interface ModEnchantment {
 
     /**
      * 添加附魔书
+     * @deprecated 未实现
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.FIELD, ElementType.TYPE})
+    @Deprecated
     @interface Book {
 
         /**

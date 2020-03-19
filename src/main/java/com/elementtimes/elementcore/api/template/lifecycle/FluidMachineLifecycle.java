@@ -36,7 +36,7 @@ public class FluidMachineLifecycle implements IMachineLifecycle {
 
     /**
      * 用于带有流体的机器，流体转移和同步部分生命周期创建
-     * @param machine 流体机器 TileEntity
+     * @param machine 流体机器 TestTileEntity
      * @param save 处理时，可能会产生一个空容器无法输出，该方法用于保存这个空容器
      * @param load 处理时，可能会产生一个空容器无法输出，该方法用于读取这个空容器
      */

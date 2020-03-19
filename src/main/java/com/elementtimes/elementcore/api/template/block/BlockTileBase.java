@@ -33,7 +33,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * 需要带有 TileEntity 的方块时继承此类
+ * 需要带有 TestTileEntity 的方块时继承此类
  *
  * @author KSGFK create in 2019/2/17
  */
@@ -53,7 +53,7 @@ public class BlockTileBase extends Block implements IDismantleBlock {
     }
 
     public BlockTileBase(Properties properties, ResourceLocation name) {
-        this(properties, () -> Objects.requireNonNull(ForgeRegistries.TILE_ENTITIES.getValue(name)).create());
+        this(properties, Objects.requireNonNull(ForgeRegistries.TILE_ENTITIES.getValue(name))::create);
     }
 
     public BlockTileBase(Properties properties, String namespace, String path) {

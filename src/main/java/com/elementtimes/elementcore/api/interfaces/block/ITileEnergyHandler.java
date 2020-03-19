@@ -97,7 +97,7 @@ public interface ITileEnergyHandler extends ICapabilityProvider {
      * 向外传电
      * @param count 发送的电量
      * @param facing 发送面
-     * @param te 发送面对应 TileEntity
+     * @param te 发送面对应 TestTileEntity
      * @param proxy 使用的代理，将从其中提取能量
      */
     default void sendEnergy(int count, @Nullable Direction facing, @Nullable TileEntity te, @Nonnull ProxyEnergyHandler.Proxy proxy) {

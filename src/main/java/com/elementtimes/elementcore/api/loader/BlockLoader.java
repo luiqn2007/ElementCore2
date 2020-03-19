@@ -2,26 +2,19 @@ package com.elementtimes.elementcore.api.loader;
 
 import com.elementtimes.elementcore.api.ECModElements;
 import com.elementtimes.elementcore.api.annotation.ModBlock;
-import com.elementtimes.elementcore.api.annotation.enums.ValueType;
 import com.elementtimes.elementcore.api.annotation.part.Parts;
-import com.elementtimes.elementcore.api.annotation.result.BlockColorWrapper;
-import com.elementtimes.elementcore.api.annotation.result.TooltipsWrapper;
 import com.elementtimes.elementcore.api.helper.FindOptions;
 import com.elementtimes.elementcore.api.helper.ObjHelper;
-import com.elementtimes.elementcore.api.helper.RefHelper;
 import com.elementtimes.elementcore.api.utils.CommonUtils;
 import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 
+import java.lang.annotation.ElementType;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 /**
  * @author luqin2007
@@ -30,68 +23,87 @@ public class BlockLoader {
 
     public static void load(ECModElements elements) {
         loadBlock(elements);
+        loadFeature(elements);
+        if (CommonUtils.isClient()) {
+            loadColor(elements);
+        }
     }
 
     private static void loadBlock(ECModElements elements) {
         ObjHelper.stream(elements, ModBlock.class).forEach(data -> {
-            String name = ObjHelper.getDefault(data);
             // block
-            Map<String, Object> dataMap = data.getAnnotationData();
-            FindOptions options = new FindOptions().withReturns(Block.class)
-                    .addParameterObjects(() -> new Object[0])
-                    .addParameterObjects(() ->
-                            new Object[] {Parts.propertiesBlock((Map<String, Object>) dataMap.get("block"), elements)}, Block.Properties.class);
-            Block block = (Block) ObjHelper.find(elements, data, options).orElseGet(() -> new Block(Block.Properties.create(Material.ROCK)));
-            ObjHelper.setRegisterName(block, name, data, elements);
-            elements.blocks.add(block);
-            loadBlockItem(elements, block, dataMap);
-            loadBlockFeature(elements, block, dataMap);
-            loadBlockTooltips(elements, block, dataMap);
-            if (CommonUtils.isClient()) {
-                loadBlockColor(elements, block, dataMap);
+            FindOptions<Block> option = new FindOptions<>(Block.class, ElementType.FIELD, ElementType.TYPE);
+            ObjHelper.find(elements, data, option).ifPresent(block -> {
+                String name = ObjHelper.getDefault(data);
+                ObjHelper.setRegisterName(block, name, data, elements);
+                elements.blocks.add(block);
+                ObjHelper.saveResult(option, elements.generatedBlocks);
+                Map<String, Object> map = data.getAnnotationData();
+                if (!(boolean) map.getOrDefault("noItem", false)) {
+                    Item.Properties properties = Parts.propertiesItem(map.get("item"), elements).orElseGet(Item.Properties::new);
+                    BlockItem item = new BlockItem(block, properties);
+                    item.setRegistryName(block.getRegistryName());
+                    elements.blockItems.add(item);
+                    ObjHelper.saveResult(option, item, elements.generatedBlockItems);
+                }
+            });
+        });
+    }
+
+    private static void loadFeature(ECModElements elements) {
+        ObjHelper.stream(elements, ModBlock.Features.class).forEach(data -> {
+            Object o;
+            if (data.getTargetType() == ElementType.FIELD) {
+                o = ObjHelper.find(elements, data, new FindOptions<>(Block.class, ElementType.FIELD)).orElse(null);
+            } else {
+                Class<?> aClass = ObjHelper.findClass(elements, data.getClassType()).orElse(null);
+                Block block = elements.generatedBlocks.get(aClass);
+                if (block == null) {
+                    o = aClass;
+                } else {
+                    o = block;
+                }
+            }
+            if (o instanceof Class) {
+                ObjHelper.getDefault(data, Collections.emptyList()).forEach(featureData -> {
+                    Parts.feature(featureData, elements, (Class<?>) o).ifPresent(elements.features::add);
+                });
+            } else {
+                ObjHelper.getDefault(data, Collections.emptyList()).forEach(featureData -> {
+                    Parts.feature(featureData, elements, (Block) o).ifPresent(elements.features::add);
+                });
             }
         });
     }
 
-    private static void loadBlockItem(ECModElements elements, Block block, Map<String, Object> dataMap) {
-        switch (ObjHelper.getEnum(ValueType.class, dataMap.get("itemType"), ValueType.CONST)) {
-            case OBJECT:
-                RefHelper.get(elements, dataMap.get("itemObj"), Item.class).ifPresent(item -> {
-                    ObjHelper.setRegisterName(block, item);
-                    elements.blockItems.put(block, item);
-                });
-                break;
-            case NONE:
-                break;
-            default:
-                Item.Properties properties = Parts.propertiesItem((Map<String, Object>) dataMap.get("item"), elements);
-                BlockItem item = new BlockItem(block, properties);
-                ObjHelper.setRegisterName(block, item);
-                elements.blockItems.put(block, item);
-        }
-    }
-
-    private static void loadBlockFeature(ECModElements elements, Block block, Map<String, Object> dataMap) {
-        List<Map<String, Object>> features = (List<Map<String, Object>>) dataMap.getOrDefault("features", Collections.emptyList());
-        for (Map<String, Object> feature : features) {
-            elements.features.add(Parts.feature(feature, block, elements));
-        }
-    }
-
     @OnlyIn(Dist.CLIENT)
-    private static void loadBlockColor(ECModElements elements, Block block, Map<String, Object> dataMap) {
-        Object blockColor = Parts.color((Map<String, Object>) dataMap.get("blockColor"), false, elements);
-        Object itemColor = Parts.color((Map<String, Object>) dataMap.get("itemColor"), false, elements);
-        if (blockColor != null || itemColor != null) {
-            elements.blockColors.add(new BlockColorWrapper(block, itemColor, blockColor));
-        }
-    }
-
-    private static void loadBlockTooltips(ECModElements elements, Block block, Map<String, Object> dataMap) {
-        Predicate<ItemTooltipEvent> p = event -> event.getItemStack().getItem().asItem() == block.asItem();
-        TooltipsWrapper tooltips = Parts.tooltips((Map<String, Object>) dataMap.get("tooltips"), p, elements);
-        if (tooltips != null) {
-            elements.tooltips.add(tooltips);
-        }
+    private static void loadColor(ECModElements elements) {
+        ObjHelper.stream(elements, ModBlock.Colors.class).forEach(data -> {
+            if (data.getTargetType() == ElementType.TYPE) {
+                ObjHelper.findClass(elements, data.getClassType()).ifPresent(aClass -> {
+                    Block block = elements.generatedBlocks.get(aClass);
+                    Map<String, Object> map = data.getAnnotationData();
+                    if (block == null) {
+                        Parts.colorBlock(map.get("block"), elements)
+                                .ifPresent(wrapper -> elements.blockColors.add(wrapper.bind(aClass)));
+                        Parts.colorItem(map.get("item"), elements)
+                                .ifPresent(wrapper -> elements.itemColors.add(wrapper.bind(aClass)));
+                    } else {
+                        Parts.colorBlock(map.get("block"), elements)
+                                .ifPresent(wrapper -> elements.blockColors.add(wrapper.bind(block)));
+                        Parts.colorItem(map.get("item"), elements)
+                                .ifPresent(wrapper -> elements.itemColors.add(wrapper.bind(block)));
+                    }
+                });
+            } else {
+                ObjHelper.find(elements, data, new FindOptions<>(Block.class, ElementType.FIELD)).ifPresent(block -> {
+                    Map<String, Object> map = data.getAnnotationData();
+                    Parts.colorBlock(map.get("block"), elements)
+                            .ifPresent(wrapper -> elements.blockColors.add(wrapper.bind(block)));
+                    Parts.colorItem(map.get("item"), elements)
+                            .ifPresent(wrapper -> elements.itemColors.add(wrapper.bind(block)));
+                });
+            }
+        });
     }
 }

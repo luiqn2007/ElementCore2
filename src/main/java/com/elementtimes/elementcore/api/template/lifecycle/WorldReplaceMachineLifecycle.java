@@ -41,7 +41,7 @@ public class WorldReplaceMachineLifecycle implements IMachineLifecycle {
 
     /**
      * 替换方块
-     * @param machine 机器 TileEntity
+     * @param machine 机器 TestTileEntity
      * @param replacer 获取替换的方块。返回 IBlockState 本身或 null 都不会替换
      * @param collector 根据替换的 IBlockState 收集产物。
      *                  该函数返回一个 Pair，left[Integer] 代表输出物品/流体槽位，right[Object]代表输出类型。

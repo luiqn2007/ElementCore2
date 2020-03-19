@@ -55,10 +55,6 @@ public class ItemGroupDynamic extends ItemGroup {
                 .collect(Collectors.toList()));
     }
 
-    public ItemGroupDynamic(String label) {
-        this(label, DEFAULT_TICK, new ArrayList<>());
-    }
-
     public ItemGroupDynamic(String label, long tick, ItemStack... itemStacks) {
         this(label, tick, Lists.newArrayList(itemStacks));
     }

@@ -1,6 +1,5 @@
 package com.elementtimes.elementcore.api.annotation.part;
 
-import com.elementtimes.elementcore.api.ECModElements;
 import com.elementtimes.elementcore.api.annotation.enums.ValueType;
 
 import java.lang.annotation.ElementType;
@@ -10,7 +9,6 @@ import java.lang.annotation.Target;
 
 /**
  * 注解到任意 Item/Block 对象中，作为方块/物品染色
- * @see Parts#color(Object, Object, boolean, ECModElements)
  * @see net.minecraft.client.renderer.color.IItemColor
  * @see net.minecraft.client.renderer.color.IBlockColor
  * @author luqin2007
@@ -31,7 +29,7 @@ public @interface Color {
      *      忽略
      * @return 染色方法
      */
-    ValueType type() default ValueType.NONE;
+    ValueType type() default ValueType.VALUE;
 
     /**
      * @return 染色值

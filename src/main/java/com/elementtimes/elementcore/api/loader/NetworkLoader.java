@@ -3,18 +3,21 @@ package com.elementtimes.elementcore.api.loader;
 import com.elementtimes.elementcore.api.ECModElements;
 import com.elementtimes.elementcore.api.annotation.ModEventNetwork;
 import com.elementtimes.elementcore.api.annotation.ModSimpleNetwork;
-import com.elementtimes.elementcore.api.annotation.result.SimpleMessageWrapper;
+import com.elementtimes.elementcore.api.annotation.part.Parts;
 import com.elementtimes.elementcore.api.helper.ObjHelper;
-import com.elementtimes.elementcore.api.helper.RefHelper;
-import com.elementtimes.elementcore.api.interfaces.invoker.Invoker;
-import com.elementtimes.elementcore.api.interfaces.invoker.VoidInvoker;
+import com.elementtimes.elementcore.api.misc.wrapper.AnnotationMethod;
+import com.elementtimes.elementcore.api.misc.wrapper.NetEventWrapper;
+import com.elementtimes.elementcore.api.misc.wrapper.NetSimpleWrapper;
 import com.elementtimes.elementcore.api.utils.ReflectUtils;
-import io.netty.buffer.Unpooled;
 import net.minecraft.network.PacketBuffer;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
+/**
+ * @author luqin2007
+ */
 public class NetworkLoader {
 
     public static void load(ECModElements elements) {
@@ -30,10 +33,25 @@ public class NetworkLoader {
         ObjHelper.stream(elements, ModSimpleNetwork.class).forEach(data -> {
             ObjHelper.findClass(elements, data.getClassType()).ifPresent(aClass -> {
                 Map<String, Object> map = data.getAnnotationData();
-                VoidInvoker encoder = RefHelper.invoker(elements, map.get("encoder"), Object.class, PacketBuffer.class);
-                Invoker<PacketBuffer> decoder = RefHelper.invoker(elements, map.get("decoder"), (a) -> new PacketBuffer(Unpooled.buffer()), Object.class);
-                VoidInvoker handler = RefHelper.invoker(elements, map.get("handler"), Object.class, Supplier.class);
-                elements.netSimples.add(new SimpleMessageWrapper(aClass, encoder, decoder, handler));
+                AnnotationMethod encoder = Parts.method(elements, map.get("encoder"), aClass, PacketBuffer.class);
+                if (!encoder.hasContent()) {
+                    elements.warn("[{}]Can't find encoder method {}", elements.container.id(), encoder.getRefName());
+                    return;
+                }
+                AnnotationMethod decoder = Parts.method(elements, map.get("decoder"), new Class[]{null});
+                if (!encoder.hasContent()) {
+                    elements.warn("[{}]Can't find decoder method {}", elements.container.id(), decoder.getRefName());
+                    return;
+                }
+                AnnotationMethod handler = Parts.method(elements, map.get("handler"), aClass, Supplier.class);
+                if (!encoder.hasContent()) {
+                    elements.warn("[{}]Can't find handler method {}", elements.container.id(), handler.getRefName());
+                    return;
+                }
+                elements.netSimples.add(new NetSimpleWrapper(aClass,
+                        (a, b) -> encoder.invoke(a, b),
+                        b -> decoder.get(b).orElseThrow(() -> new RuntimeException(String.format("[{}]Can't create MSG from %s", elements.container.id(), decoder.getRefName()))),
+                        (a, b) -> handler.invoke(a, b)));
             });
         });
     }
@@ -42,9 +60,14 @@ public class NetworkLoader {
         ObjHelper.stream(elements, ModEventNetwork.class).forEach(data -> {
             ObjHelper.findClass(elements, data.getClassType()).ifPresent(aClass -> {
                 if (ObjHelper.getDefault(data, false)) {
-                    elements.netEvents.add(ReflectUtils.create(aClass, aClass, elements));
+                    Optional<Object> o = ReflectUtils.findConstructor(aClass, aClass).get();
+                    if (o.isPresent()) {
+                        elements.netEvents.add(new NetEventWrapper(o.get()));
+                    } else {
+                        elements.warn("[{}]Can't create object {}", elements.container.id(), aClass.getName());
+                    }
                 } else {
-                    elements.netEvents.add(aClass);
+                    elements.netEvents.add(new NetEventWrapper(aClass));
                 }
             });
         });

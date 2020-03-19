@@ -3,11 +3,7 @@ package com.elementtimes.elementcore.api.annotation.part;
 import com.elementtimes.elementcore.api.ECModElements;
 import com.elementtimes.elementcore.api.annotation.enums.ValueType;
 import com.elementtimes.elementcore.api.helper.ObjHelper;
-import com.elementtimes.elementcore.api.helper.RefHelper;
-import com.elementtimes.elementcore.api.interfaces.invoker.IntInvoker;
-import com.elementtimes.elementcore.api.interfaces.invoker.Invoker;
-import com.elementtimes.elementcore.api.misc.BlockFeatureWrapper;
-import com.elementtimes.elementcore.api.misc.EntitySpawnWrapper;
+import com.elementtimes.elementcore.api.misc.wrapper.*;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
@@ -20,6 +16,7 @@ import net.minecraft.item.*;
 import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.StringUtils;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IEnviromentBlockReader;
@@ -34,12 +31,15 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ToolType;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.objectweb.asm.Type;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
- * 除 Getter, Method 外其他类的处理方法
+ * part 注解类处理方法
  * @author luqin2007
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
@@ -48,18 +48,17 @@ public class Parts {
     /**
      * @see com.elementtimes.elementcore.api.annotation.part.Biome
      */
-    public static Supplier<Optional<Biome>> biome(Object biome, Object annotatedObj, ECModElements elements) {
+    public static Supplier<Optional<Biome>> biome(Object biome, Object object, ECModElements elements) {
         Map<String, Object> map = ObjHelper.getAnnotationMap(biome);
         if (map == null) {
             return Optional::empty;
         }
         switch (ObjHelper.getEnum(ValueType.class, map.get("type"), ValueType.VALUE)) {
             case OBJECT:
-                Supplier<Biome> getter = RefHelper.getter(elements, map.get("object"), Biome.class);
-                return () -> Optional.ofNullable(getter.get());
+                return getter(elements, map.get("object"))::get;
             case METHOD:
-                Invoker<Biome> invoker = RefHelper.invoker(elements, map.get("method"), (a) -> null, Object.class);
-                return () -> Optional.ofNullable(invoker.invoke(annotatedObj));
+                Class<?> pt = object instanceof Block ? Block.class : EntityType.class;
+                return method(elements, map.get("method"), pt)::get;
             case VALUE:
                 String name = (String) map.getOrDefault("value", "");
                 ResourceLocation location = new ResourceLocation(name);
@@ -77,10 +76,8 @@ public class Parts {
             return Optional.empty();
         }
         switch (ObjHelper.getEnum(ValueType.class, map.get("type"), ValueType.OBJECT)) {
-            case OBJECT:
-                return RefHelper.get(elements, map.get("object"), Material.class);
-            case METHOD:
-                return RefHelper.invoke(elements, map.get("method"), Material.class, new Object[0]);
+            case OBJECT: return getter(elements, map.get("object")).get();
+            case METHOD: return method(elements, map.get("method")).get();
             case VALUE:
                 MaterialColor color = MaterialColor.COLORS[MathHelper.clamp((int) map.getOrDefault("colorIndex", 11), 0, 63)];
                 boolean isLiquid = (boolean) map.getOrDefault("isLiquid", false);
@@ -93,8 +90,7 @@ public class Parts {
                 PushReaction pushReaction = ObjHelper.getEnum(PushReaction.class, map.get("pushReaction"), PushReaction.NORMAL);
                 Material m = new Material(color, isLiquid, isSolid, isBlockMovement, isOpaque, !requiresTool, flammable, replaceable, pushReaction);
                 return Optional.of(m);
-            default:
-                return Optional.empty();
+            default: return Optional.empty();
         }
     }
 
@@ -108,11 +104,11 @@ public class Parts {
         }
         switch (ObjHelper.getEnum(ValueType.class, map.get("type"), ValueType.OBJECT)) {
             case OBJECT:
-                return RefHelper.get(elements, map.get("object"), Object.class)
+                return getter(elements, map.get("object")).get()
                         .map(obj -> obj instanceof Block ? Block.Properties.from((Block) obj) : obj)
                         .filter(obj -> obj instanceof Block.Properties).map(o -> (Block.Properties) o);
             case METHOD:
-                return RefHelper.invoke(elements, map.get("method"), Object.class, new Object[0])
+                return method(elements, map.get("method")).get()
                         .map(obj -> obj instanceof Block ? Block.Properties.from((Block) obj) : obj)
                         .filter(obj -> obj instanceof Block.Properties).map(o -> (Block.Properties) o);
             case VALUE:
@@ -138,7 +134,7 @@ public class Parts {
                     if ((boolean) map.getOrDefault("doesNotBlockMovement", false)) {
                         properties.doesNotBlockMovement();
                     }
-                    RefHelper.get(elements, map.get("soundType"), SoundType.class).ifPresent(properties::sound);
+                    getter(elements, map.get("soundType")).<SoundType>get().ifPresent(properties::sound);
                     Integer lightValue = (Integer) map.get("lightValue");
                     if (lightValue != null) {
                         properties.lightValue(lightValue);
@@ -156,7 +152,7 @@ public class Parts {
                     }
                     if (map.containsKey("harvest")) {
                         Map<String, Object> harvestMap = (Map<String, Object>) map.get("harvest");
-                        RefHelper.get(elements, harvestMap.get("tool"), ToolType.class).ifPresent(type -> {
+                        getter(elements, harvestMap.get("tool")).<ToolType>get().ifPresent(type -> {
                             properties.harvestTool(type);
                             properties.harvestLevel((int) harvestMap.getOrDefault("level", -1));
                         });
@@ -164,7 +160,7 @@ public class Parts {
                     if ((boolean) map.getOrDefault("noDrops", false)) {
                         properties.noDrops();
                     }
-                    RefHelper.get(elements, map.get("loot"), Block.class).ifPresent(properties::lootFrom);
+                    getter(elements, map.get("loot")).<Block>get().ifPresent(properties::lootFrom);
                     return Optional.of(properties);
                 }
                 return Optional.empty();
@@ -177,32 +173,35 @@ public class Parts {
      * @see Color
      */
     @OnlyIn(Dist.CLIENT)
-    public static Optional<Object> color(Object color, boolean forItem, ECModElements elements) {
+    public static Optional<ItemColorWrapper> colorItem(Object color, ECModElements elements) {
         Map<String, Object> map = ObjHelper.getAnnotationMap(color);
-        if (map == null) {
+        if (map == null || map.isEmpty()) {
             return Optional.empty();
         }
-        switch (ObjHelper.getEnum(ValueType.class, map.get("type"), ValueType.NONE)) {
+        switch (ObjHelper.getEnum(ValueType.class, map.get("type"), ValueType.VALUE)) {
             case VALUE:
-                int cl = (int) map.getOrDefault("value", 0);
-                Object ov = forItem
-                        ? (net.minecraft.client.renderer.color.IItemColor) (a, b) -> cl
-                        : (net.minecraft.client.renderer.color.IBlockColor) (a, b, c, d) -> cl;
-                return Optional.of(ov);
+                return Optional.of(new ItemColorWrapper((int) map.getOrDefault("value", 0)));
             case METHOD:
-                Class<?>[] types = forItem
-                        ? new Class<?>[] {ItemStack.class, int.class}
-                        : new Class<?>[] {BlockState.class, IEnviromentBlockReader.class, BlockPos.class, int.class};
-                IntInvoker invoker = RefHelper.invoker(elements, map.get("method"), 0, types);
-                Object om = forItem
-                        ? (net.minecraft.client.renderer.color.IItemColor) (a, b) -> invoker.invoke(a, b)
-                        : (net.minecraft.client.renderer.color.IBlockColor) (a, b, c, d) -> invoker.invoke(a, b, c, d);
-                return Optional.of(om);
+                return Optional.of(new ItemColorWrapper(elements, method(elements, map.get("method"), ItemStack.class, int.class)));
             case OBJECT:
-                Class<?> type = forItem
-                        ? net.minecraft.client.renderer.color.IItemColor.class
-                        : net.minecraft.client.renderer.color.IBlockColor.class;
-                return RefHelper.get(elements, map.get("object"), type).map(o -> (Object) o);
+                return Optional.of(new ItemColorWrapper(elements, getter(elements, map.get("object"))));
+            default: return Optional.empty();
+        }
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public static Optional<BlockColorWrapper> colorBlock(Object color, ECModElements elements) {
+        Map<String, Object> map = ObjHelper.getAnnotationMap(color);
+        if (map == null || map.isEmpty()) {
+            return Optional.empty();
+        }
+        switch (ObjHelper.getEnum(ValueType.class, map.get("type"), ValueType.VALUE)) {
+            case VALUE:
+                return Optional.of(new BlockColorWrapper((int) map.getOrDefault("value", 0)));
+            case METHOD:
+                return Optional.of(new BlockColorWrapper(elements, method(elements, map.get("method"), BlockState.class, IEnviromentBlockReader.class, BlockPos.class, int.class)));
+            case OBJECT:
+                return Optional.of(new BlockColorWrapper(elements, getter(elements, map.get("object"))));
             default: return Optional.empty();
         }
     }
@@ -249,7 +248,7 @@ public class Parts {
             return Optional.empty();
         }
         Item.Properties properties = new Item.Properties();
-        Optional<net.minecraft.item.Food> food = RefHelper.get(elements, map.get("foodGetter"), net.minecraft.item.Food.class);
+        Optional<net.minecraft.item.Food> food = getter(elements, map.get("foodGetter")).get();
         if (food.isPresent()) {
             properties.food(food.get());
         } else {
@@ -262,9 +261,9 @@ public class Parts {
             }
         }
         if (map.containsKey("containerItem")) {
-            RefHelper.get(elements, map.get("containerItem"), Item.class).ifPresent(properties::containerItem);
+            getter(elements, map.get("containerItem")).<Item>get().ifPresent(properties::containerItem);
         }
-        RefHelper.get(elements, map.get("group"), ItemGroup.class).ifPresent(properties::group);
+        getter(elements, map.get("group")).<ItemGroup>get().ifPresent(properties::group);
         if (map.containsKey("rarity")) {
             properties.rarity(ObjHelper.getEnum(Rarity.class, map.get("rarity"), Rarity.COMMON));
         }
@@ -274,16 +273,16 @@ public class Parts {
         if (map.containsKey("toolType")) {
             List<Map<String, Object>> types = (List<Map<String, Object>>) map.getOrDefault("toolType", Collections.emptyList());
             for (Map<String, Object> typeMap : types) {
-                RefHelper.get(elements, typeMap.get("tool"), ToolType.class).ifPresent(type -> {
+                getter(elements, typeMap.get("tool")).<ToolType>get().ifPresent(type -> {
                     int level = (int) typeMap.getOrDefault("level", 0);
                     properties.addToolType(type, level);
                 });
             }
         }
         if (map.containsKey("teisr")) {
-            Supplier<Object> teisr = RefHelper.getterOrNull(elements, map.get("teisr"), Object.class);
-            if (teisr != null) {
-                properties.setTEISR(() -> () -> (net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer) teisr.get());
+            AnnotationGetter teisr = getter(elements, map.get("teisr"));
+            if (teisr.hasContent()) {
+                properties.setTEISR(() -> () -> (net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer) teisr.get().orElse(null));
             }
         }
         return Optional.of(properties);
@@ -297,7 +296,7 @@ public class Parts {
         if (map == null) {
             return Optional.empty();
         }
-        Optional<? extends Effect> effectOpt = RefHelper.get(elements, map.get("effect"), Effect.class);
+        Optional<Effect> effectOpt = getter(elements, map.get("effect")).get();
         if (effectOpt.isPresent()) {
             Effect e = effectOpt.get();
             int duration = (int) map.getOrDefault("duration", 0);
@@ -313,12 +312,12 @@ public class Parts {
     /**
      * @see EntitySpawn
      */
-    public static Optional<EntitySpawnWrapper> entitySpawn(Object spawn, Object annotatedObj, EntityType<?> type, Biome defBiome, ECModElements elements) {
+    public static Optional<EntitySpawnWrapper> entitySpawn(Object spawn, EntityType<?> type, ECModElements elements) {
         Map<String, Object> map = ObjHelper.getAnnotationMap(spawn);
         if (map == null || type == null) {
             return Optional.empty();
         }
-        Supplier<Optional<Biome>> biome = biome(map.get("biome"), annotatedObj, elements);
+        Supplier<Optional<Biome>> biome = biome(map.get("biome"), type, elements);
         int weight = (int) map.getOrDefault("weight", 10);
         int min = (int) map.getOrDefault("minCount", 4);
         int max = (int) map.getOrDefault("maxCount", 4);
@@ -330,55 +329,109 @@ public class Parts {
     /**
      * @see com.elementtimes.elementcore.api.annotation.part.Feature
      */
-    public static Optional<BlockFeatureWrapper> feature(Object feature, Object annotatedObj, ECModElements elements, Supplier<Collection<Block>> blocks) {
+    public static Optional<BlockFeatureWrapper> feature(Object feature, ECModElements elements, Block block) {
+        return feature(feature, elements, () -> Collections.singleton(block));
+    }
+
+    /**
+     * @see com.elementtimes.elementcore.api.annotation.part.Feature
+     */
+    public static Optional<BlockFeatureWrapper> feature(Object feature, ECModElements elements, Class<?> block) {
+        return feature(feature, elements, () -> ForgeRegistries.BLOCKS.getValues().stream().filter(block::isInstance).collect(Collectors.toList()));
+    }
+
+    private static Optional<BlockFeatureWrapper> feature(Object feature, ECModElements elements, Supplier<Collection<Block>> blocks) {
         Map<String, Object> map = ObjHelper.getAnnotationMap(feature);
         if (map == null) {
             return Optional.empty();
         }
-        Supplier<Optional<Biome>> biome = biome(map.get("biome"), annotatedObj, elements);
         GenerationStage.Decoration decoration = ObjHelper.getEnum(GenerationStage.Decoration.class, map.get("decoration"), GenerationStage.Decoration.UNDERGROUND_ORES);
+        Function<Block, Optional<Biome>> biome = b -> biome(map.get("biome"), b, elements).get();
         switch (ObjHelper.getEnum(ValueType.class, map.get("type"), ValueType.VALUE)) {
             case OBJECT:
-                Supplier<ConfiguredFeature> getterObj = RefHelper.getter(elements, map.get("getter"), ConfiguredFeature.class);
-                Supplier<ConfiguredFeature[]> getterArr = RefHelper.getter(elements, map.get("getter"), ConfiguredFeature[].class);
-                return Optional.of(new BlockFeatureWrapper(biome, decoration, () -> {
-                    ConfiguredFeature<?> f = getterObj.get();
-                    if (f != null) {
-                        return new ConfiguredFeature[] {f};
-                    } else {
-                        return getterArr.get();
-                    }
-                }));
+                AnnotationGetter getterObj = getter(elements, map.get("object"));
+                return Optional.of(new BlockFeatureWrapper(decoration, biome, b -> getterObj.<ConfiguredFeature>get().orElse(null), blocks));
             case METHOD:
-                Invoker<ConfiguredFeature<?>> invokerObj = RefHelper.invoker(elements, map.get("method"), (a) -> null, Object.class);
-                Invoker<ConfiguredFeature<?>[]> invokerArr = RefHelper.invoker(elements, map.get("method"), (a) -> null, Object.class);
-                return Optional.of(new BlockFeatureWrapper(biome, decoration, () -> {
-                    ConfiguredFeature<?> f = invokerObj.invoke(annotatedObj);
-                    if (f != null) {
-                        return new ConfiguredFeature[] {f};
-                    } else {
-                        return invokerArr.invoke(annotatedObj);
-                    }
-                }));
+                AnnotationMethod invokerObj = method(elements, map.get("method"), Block.class);
+                return Optional.of(new BlockFeatureWrapper(decoration, biome, b -> invokerObj.<ConfiguredFeature>get(b).orElse(null), blocks));
             case VALUE:
-                Supplier<Feature> featureSupplier = RefHelper.getter(elements, map.get("feature"), Feature.class);
-                Invoker<IFeatureConfig> featureConfigInvoker = RefHelper.invoker(elements, map.get("featureConfig"), (a) -> null, Block.class, Feature.class);
-                Supplier<Placement> placementSupplier = RefHelper.getter(elements, map.get("placement"), Placement.class);
-                Invoker<IPlacementConfig> placementConfigInvoker = RefHelper.invoker(elements, map.get("placementConfig"), (a) -> null, Block.class, Placement.class);
-                BlockFeatureWrapper wrapperFeature = new BlockFeatureWrapper(biome, decoration, () -> {
-                    List<ConfiguredFeature> list = new ArrayList<>();
-                    for (Block block : blocks.get()) {
-                        Feature f = featureSupplier.get();
-                        Placement placement = placementSupplier.get();
-                        IFeatureConfig featureConfig = featureConfigInvoker.invoke(block, f);
-                        IPlacementConfig placementConfig = placementConfigInvoker.invoke(block, placement);
-                        list.add(Biome.createDecoratedFeature(f, featureConfig, placement, placementConfig));
-                    }
-                    return list.toArray(new ConfiguredFeature[0]);
-                });
+                AnnotationGetter featureSupplier = getter(elements, map.get("feature"));
+                AnnotationMethod featureConfigInvoker = method(elements, map.get("featureConfig"), Block.class, Feature.class);
+                AnnotationGetter placementSupplier = getter(elements, map.get("placement"));
+                AnnotationMethod placementConfigInvoker = method(elements, map.get("placementConfig"), Block.class, Placement.class);
+                BlockFeatureWrapper wrapperFeature = new BlockFeatureWrapper(decoration, biome, b -> {
+                    Feature f = featureSupplier.<Feature>get().orElse(null);
+                    Placement p = placementSupplier.<Placement>get().orElse(null);
+                    IFeatureConfig fc = featureConfigInvoker.<IFeatureConfig>get(b, f).orElse(null);
+                    IPlacementConfig pc = placementConfigInvoker.<IPlacementConfig>get(b, p).orElse(null);
+                    return Biome.createDecoratedFeature(f, fc, p, pc);
+                }, blocks);
                 return Optional.of(wrapperFeature);
             default: return Optional.empty();
 
         }
+    }
+
+    /**
+     * @see Getter
+     * @see Getter2
+     */
+    public static AnnotationGetter getter(ECModElements elements, Object getter) {
+        Map<String, Object> getterMap = ObjHelper.getAnnotationMap(getter);
+        if (getterMap == null || !getterMap.containsKey("value") || "".equals(getterMap.get("name"))) {
+            return AnnotationGetter.EMPTY;
+        }
+        Object type = getterMap.get("value");
+        Optional<Class<?>> optional;
+        if (type instanceof String) {
+            optional = ObjHelper.findClass(elements, (String) type);
+        } else if (type instanceof Type) {
+            optional = ObjHelper.findClass(elements, (Type) type);
+        } else {
+            return AnnotationGetter.EMPTY;
+        }
+        if (optional.isPresent()) {
+            Class<?> aClass = optional.get();
+            String name = (String) getterMap.getOrDefault("name", "<init>");
+            return new AnnotationGetter(aClass, name);
+        } else {
+            return AnnotationGetter.EMPTY;
+        }
+    }
+
+    /**
+     * @see Method
+     * @see Method2
+     */
+    public static AnnotationMethod method(ECModElements elements, Object method, Class<?>... argTypes) {
+        Map<String, Object> methodMap = ObjHelper.getAnnotationMap(method);
+        if (methodMap == null) {
+            return AnnotationMethod.EMPTY;
+        }
+        String className;
+        Object container = methodMap.get("value");
+        if (container instanceof String) {
+            className = (String) container;
+            if (className.isEmpty()) {
+                return AnnotationMethod.EMPTY;
+            }
+        } else if (container instanceof Type) {
+            className = ((Type) container).getClassName();
+            if (Method.class.getName().equals(className)) {
+                return AnnotationMethod.EMPTY;
+            }
+        } else {
+            return AnnotationMethod.EMPTY;
+        }
+        String methodName = (String) methodMap.getOrDefault("name", "<init>");
+        if (StringUtils.isNullOrEmpty(methodName)) {
+            return AnnotationMethod.EMPTY;
+        }
+        Optional<Class<?>> optional = ObjHelper.findClass(elements, className);
+        if (optional.isPresent()) {
+            Class<?> aClass = optional.get();
+            return new AnnotationMethod(aClass, methodName, getter(elements, methodMap.get("holder")), argTypes);
+        }
+        return AnnotationMethod.EMPTY;
     }
 }

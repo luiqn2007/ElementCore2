@@ -36,7 +36,7 @@ public @interface ModEntity {
      * 参数: EntityType, World
      * 返回值: Entity
      */
-    Method create() default @Method;
+    Method create();
     EntityClassification classification() default EntityClassification.CREATURE;
 
     /**
@@ -68,7 +68,7 @@ public @interface ModEntity {
      * 返回值：
      *  Entity
      */
-    Method2 clientFactory();
+    Method2 clientFactory() default @Method2;
 
     /**
      * 获取该实体的渲染类的创建方法
@@ -77,7 +77,7 @@ public @interface ModEntity {
      * 返回值
      *  EntityRenderer
      */
-    Method2 renderer() default @Method2;
+    Method2 renderer();
 
     /**
      * 若直接注册 EntityType 实例，使用此注解
@@ -121,9 +121,9 @@ public @interface ModEntity {
          */
         String name() default "";
 
-        int primaryColor() default 0x00000000;
-        int secondaryColor() default 0x00000000;
-        ItemProps properties() default @ItemProps;
+        int primary() default 0x00000000;
+        int secondary() default 0x00000000;
+        ItemProps prop() default @ItemProps;
 
         /**
          * 若被注解对象没有被 ModEntity 或 ModEntity.Type 注解注册，使用该属性获取一个 EntityType 对象

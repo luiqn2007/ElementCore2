@@ -1,151 +1,190 @@
 package com.elementtimes.elementcore.api.helper;
 
 import com.elementtimes.elementcore.api.ECModElements;
+import com.elementtimes.elementcore.api.utils.CollectUtils;
 import com.elementtimes.elementcore.api.utils.ReflectUtils;
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.objectweb.asm.Type;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.lang.annotation.ElementType;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-public class FindOptions {
+/**
+ * @author luqin2007
+ */
+public class FindOptions<T> {
 
-    public static final FindOptions DEFAULT = new FindOptions();
+    private Class<T> returnType;
+    private Int2ObjectMap<List<Object[]>> parameters = new Int2ObjectArrayMap<>();
+    private List<ImmutablePair<Class<?>[], Supplier<Object[]>>> parameterAndTypes = new ArrayList<>();
+    private Object o;
+    private ElementType[] types;
+    private BiConsumer<Class<?>, T> afterCreate = (a, b) -> {}, afterGet = (a, b) -> {}, afterInvoke = (a, b) -> {};
 
-    ElementType[] allowedTypes = new ElementType[] {ElementType.FIELD, ElementType.TYPE, ElementType.CONSTRUCTOR};
+    public boolean isFound = false;
+    public boolean hasClass = false;
+    public Class<?> aClass = null;
+    public T result = null;
+    public ElementType createType = null;
 
-    Class<?>[] returnTypes = new Class<?>[] {Object.class};
+    public FindOptions(@Nullable Object getIn, @Nonnull Class<T> returnType, ElementType allowType, ElementType... otherAllowTypes) {
+        this.returnType = returnType;
+        this.o = getIn;
+        this.types = ArrayUtils.add(otherAllowTypes, allowType);
+    }
 
-    List<ImmutablePair<Class<?>[], Supplier<Object[]>>> parameterObjects = new ArrayList<>();
+    public FindOptions(@Nonnull Class<T> returnType, ElementType allowType, ElementType... otherAllowTypes) {
+        this(null, returnType, allowType, otherAllowTypes);
+    }
 
-    Object o = null;
-
-    public FindOptions withTypes(ElementType... types) {
-        allowedTypes = types;
+    public FindOptions<T> addParametersAndTypes(Supplier<Object[]> parameters, Class<?>... types) {
+        parameterAndTypes.add(ImmutablePair.of(types, parameters));
         return this;
     }
 
-    public FindOptions withReturns(Class<?>... types) {
-        returnTypes = types.length == 0 ? new Class<?>[] {Object.class} : types;
+    public FindOptions<T> addParameters(Object... parameters) {
+        CollectUtils.computeIfAbsent(this.parameters, parameters.length, ArrayList::new).add(parameters);
         return this;
     }
 
-    public FindOptions addParameterObjects(Supplier<Object[]> parameters, Class<?>... types) {
-        parameterObjects.add(ImmutablePair.of(types, parameters));
-        return this;
-    }
-
-    public FindOptions bindObject(Object bind) {
-        o = bind;
-        return this;
-    }
-
-    public Optional<Object> get(ECModElements elements, ModFileScanData.AnnotationData data) {
+    public Optional<T> get(ECModElements elements, ModFileScanData.AnnotationData data) {
         ElementType targetType = data.getTargetType();
-        if (ArrayUtils.contains(allowedTypes, targetType)) {
-            switch (targetType) {
-                case TYPE: return getFromClass(elements, data);
-                case CONSTRUCTOR: return getFromConstructor(elements, data);
-                case METHOD: return getFromMethod(elements, data);
-                case FIELD: return getFromField(elements, data);
-                default: return Optional.empty();
-            }
+        if (!ArrayUtils.contains(types, targetType)) {
+            return Optional.empty();
         }
-        return Optional.empty();
+        switch (targetType) {
+            case TYPE: newInstance(elements, data); break;
+            case CONSTRUCTOR: newInstanceConstructor(elements, data); break;
+            case METHOD: invokeMethod(elements, data); break;
+            case FIELD: getField(elements, data); break;
+            default:
+        }
+        isFound = result != null && aClass != null;
+        hasClass = aClass != null;
+        createType = data.getTargetType();
+        return Optional.ofNullable(result);
     }
 
-    private Optional<Object> getFromClass(ECModElements elements, ModFileScanData.AnnotationData data) {
+    private void newInstance(ECModElements elements, ModFileScanData.AnnotationData data) {
         String className = data.getClassType().getClassName();
-        Optional<Class<?>> classOpt = ObjHelper.findClass(elements, className);
-        if (classOpt.isPresent()) {
-            Class<?> aClass = classOpt.get();
-            if (checkType(aClass)) {
-                for (ImmutablePair<Class<?>[], Supplier<Object[]>> pair : parameterObjects) {
-                    Class<?>[] parameterTypes = pair.left;
-                    Object[] parameterObjects = pair.right.get();
+        aClass = ObjHelper.findClass(elements, className).orElse(null);
+        if (checkType(aClass)) {
+            Constructor<?>[] constructors = aClass.getDeclaredConstructors();
+            for (Constructor<?> constructor : constructors) {
+                Object[] objects = findAcceptedParameters(constructor.getParameterTypes());
+                if (objects != null) {
                     try {
-                        Constructor<?> c = aClass.getConstructor(parameterTypes);
-                        c.setAccessible(true);
-                        return Optional.of(c.newInstance(parameterObjects));
-                    } catch (Exception ignored) { }
+                        if (!Modifier.isPublic(constructor.getModifiers())) {
+                            constructor.setAccessible(true);
+                        }
+                        result = (T) constructor.newInstance(objects);
+                        return;
+                    } catch (Exception ignored) {}
                 }
             }
         }
-        return Optional.empty();
     }
 
-    private Optional<Object> getFromConstructor(ECModElements elements, ModFileScanData.AnnotationData data) {
+    private void newInstanceConstructor(ECModElements elements, ModFileScanData.AnnotationData data) {
         String className = data.getClassType().getClassName();
         Optional<Class<?>> classOpt = ObjHelper.findClass(elements, className);
         if (classOpt.isPresent()) {
-            Class<?> aClass = classOpt.get();
+            aClass = classOpt.get();
             if (checkType(aClass)) {
                 Class<?>[] parameterTypes = Arrays.stream(data.getClassType().getArgumentTypes())
-                        .map(Type::getClassName)
-                        .map(cn -> {
-                            try { return Thread.currentThread().getContextClassLoader().loadClass(cn); }
-                            catch (ClassNotFoundException e) { e.printStackTrace();return null; }
-                        })
+                        .map(type -> ObjHelper.findClass(elements, type).orElse(null))
                         .toArray(Class[]::new);
                 try {
-                    Constructor<?> c = aClass.getConstructor(parameterTypes);
-                    c.setAccessible(true);
-                    return Optional.of(c.newInstance(parameterObjects));
-                } catch (Exception ignored) { }
+                    Constructor<?> constructor = aClass.getDeclaredConstructor(parameterTypes);
+                    Object[] values = findAcceptedParameters(parameterTypes);
+                    if (values != null) {
+                        if (!Modifier.isPublic(constructor.getModifiers())) {
+                            constructor.setAccessible(true);
+                        }
+                        result = (T) constructor.newInstance(values);
+                    }
+                } catch (Exception ignored) {}
             }
         }
-        return Optional.empty();
     }
 
-    private Optional<Object> getFromMethod(ECModElements elements, ModFileScanData.AnnotationData data) {
+    private void invokeMethod(ECModElements elements, ModFileScanData.AnnotationData data) {
         String memberName = data.getMemberName();
         memberName = memberName.substring(memberName.indexOf(")") + 1);
         String className = data.getClassType().getClassName();
-        Optional<Class<?>> classOpt = ObjHelper.findClass(elements, className);
-        if (classOpt.isPresent()) {
-            Class<?> aClass = classOpt.get();
-            for (ImmutablePair<Class<?>[], Supplier<Object[]>> pair : parameterObjects) {
-                Class<?>[] parameterTypes = pair.left;
-                Object[] parameterObjects = pair.right.get();
-                try {
-                    Method m;
-                    try {
-                        m = aClass.getDeclaredMethod(memberName, parameterTypes);
-                    } catch (Exception e) {
-                        m = aClass.getMethod(memberName, parameterTypes);
+        aClass = ObjHelper.findClass(elements, className).orElse(null);
+        if (aClass != null) {
+            List<Method> methods = new ArrayList<>();
+            Collections.addAll(methods, aClass.getDeclaredMethods());
+            Collections.addAll(methods, aClass.getMethods());
+            for (Method method : methods) {
+                if (memberName.equals(method.getName()) && checkType(method.getReturnType())) {
+                    Object[] objects = findAcceptedParameters(method.getParameterTypes());
+                    if (objects != null) {
+                        try {
+                            if (!Modifier.isPublic(method.getModifiers())) {
+                                method.setAccessible(true);
+                            }
+                            result = (T) method.invoke(o, objects);
+                        } catch (Exception ignored)  {}
                     }
-                    if (checkType(m.getReturnType())) {
-                        m.setAccessible(true);
-                        return Optional.of(m.invoke(o, parameterObjects));
-                    }
-                } catch (Exception ignored) { }
+                }
             }
         }
-        return Optional.empty();
     }
 
-    private Optional<Object> getFromField(ECModElements elements, ModFileScanData.AnnotationData data) {
+    private void getField(ECModElements elements, ModFileScanData.AnnotationData data) {
         String memberName = data.getMemberName();
         String className = data.getClassType().getClassName();
         Optional<Class<?>> classOpt = ObjHelper.findClass(elements, className);
         if (classOpt.isPresent()) {
-            Class<?> aClass = classOpt.get();
-            Optional<Object> o = ReflectUtils.get(aClass, memberName, this.o, returnTypes.length == 1 ? returnTypes[0] : Object.class, elements);
-            return o.filter(obj -> checkType(obj.getClass()));
+            aClass = classOpt.get();
+            result = (T) ReflectUtils.findField(aClass, o, memberName).get().orElse(null);
         }
-        return Optional.empty();
     }
 
-    private boolean checkType(Class<?> type) {
-        for (Class<?> returnType : returnTypes) {
-            if (returnType.isAssignableFrom(type)) {
-                return true;
+    private boolean checkType(Class<?> aClass) {
+        return ReflectUtils.isAssignableFrom(returnType, aClass);
+    }
+
+    private Object[] findAcceptedParameters(Class<?>[] types) {
+        if (parameters.isEmpty() && parameterAndTypes.isEmpty()) {
+            CollectUtils.computeIfAbsent(parameters, 0, ArrayList::new).add(new Object[0]);
+        }
+        for (ImmutablePair<Class<?>[], Supplier<Object[]>> pair : parameterAndTypes) {
+            Class<?>[] parameterTypes = pair.left;
+            if (Arrays.equals(types, parameterTypes)) {
+                return pair.right.get();
             }
         }
-        return false;
+        int length = types.length;
+        List<Object[]> list = parameters.get(length);
+        if (list != null && !list.isEmpty()) {
+            for (Object[] objects : list) {
+                if (typeAccept(length, objects, types)) {
+                    return objects;
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean typeAccept(int length, Object[] parameters, Class<?>[] types) {
+        for (int i = 0; i < length; i++) {
+            if (!ReflectUtils.canAccept(types[i], parameters[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -9,6 +9,7 @@ import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.command.CommandSource;
 
 import java.lang.annotation.ElementType;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author luqin2007
@@ -21,15 +22,21 @@ public class CommandLoader {
 
     private static void loadCommand(ECModElements elements) {
         ObjHelper.stream(elements, ModCommand.class).forEach(data -> {
-            FindOptions options = new FindOptions()
-                    .withReturns(CommandNode.class, LiteralArgumentBuilder.class)
-                    .withTypes(ElementType.TYPE, ElementType.FIELD)
-                    .addParameterObjects(() -> new Object[0]);
+            AtomicReference<Class<?>> c = new AtomicReference<>();
+            FindOptions<Object> options = new FindOptions<>(Object.class, ElementType.TYPE, ElementType.FIELD);
             ObjHelper.find(elements, data, options).ifPresent(obj -> {
                 if (obj instanceof CommandNode) {
-                    elements.commands.add((CommandNode<CommandSource>) obj);
-                } else {
-                    elements.commandBuilders.add((LiteralArgumentBuilder<CommandSource>) obj);
+                    CommandNode<CommandSource> command = (CommandNode<CommandSource>) obj;
+                    elements.commands.add(command);
+                    if (data.getTargetType() == ElementType.TYPE) {
+                        ObjHelper.saveResult(options, command, elements.generatedCommandNodes);
+                    }
+                } else if (obj instanceof LiteralArgumentBuilder) {
+                    LiteralArgumentBuilder<CommandSource> command = (LiteralArgumentBuilder<CommandSource>) obj;
+                    elements.commandBuilders.add(command);
+                    if (data.getTargetType() == ElementType.TYPE) {
+                        ObjHelper.saveResult(options, command, elements.generatedCommandBuilders);
+                    }
                 }
             });
         });

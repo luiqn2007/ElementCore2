@@ -80,8 +80,8 @@ public class BaseScreen extends ContainerScreen<BaseContainer> {
                 FluidStack fluidStack = handler.getFluidInTank(slot);
                 int capacity = handler.getTankCapacity(slot);
                 if (!fluidStack.isEmpty()) {
-                    // TODO 2
-                    ResourceLocation stillTexture = fluidStack.getFluid().getRegistryName();
+                    ResourceLocation stillTexture = fluidStack.getFluid().getAttributes().getFlowingTexture();
+                    stillTexture = new ResourceLocation(stillTexture.getNamespace(), "textures/" + stillTexture.getPath() + ".png");
                     assert minecraft != null;
                     minecraft.getTextureManager().bindTexture(stillTexture);
                     if (slotInfo.isHorizontal) {

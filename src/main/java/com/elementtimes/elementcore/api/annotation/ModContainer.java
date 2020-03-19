@@ -2,6 +2,8 @@ package com.elementtimes.elementcore.api.annotation;
 
 import com.elementtimes.elementcore.api.annotation.part.Getter;
 import com.elementtimes.elementcore.api.annotation.part.Method2;
+import net.minecraft.client.gui.ScreenManager;
+import net.minecraft.inventory.container.ContainerType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -48,7 +50,7 @@ public @interface ModContainer {
     Method2 screen() default @Method2;
 
     /**
-     * 注册 Screen
+     * 单独注册 Screen
      * 该 Screen 应实现 IHasContainer 接口，通常为 ContainerScreen
      * 该注解应当应用到 Screen 类的相关内容中
      *  若应用到 ContainerScreen 类，则该类应当有一个可被使用的构造函数
@@ -58,6 +60,10 @@ public @interface ModContainer {
      *      (Container container, PlayerInventory inventory, ITextComponent text)
      *  类型的参数的 Screen 子类的构造函数或返回 Screen 对象的方法
      *  （即 可直接转化为 {@link net.minecraft.client.gui.ScreenManager.IScreenFactory} 接口对象的构造或方法）
+     * 注意
+     *    该注解不会同时注册 ContainerType。正常情况下不应当使用此注解
+     *    该方法仅仅作为 {@link net.minecraft.client.gui.ScreenManager#registerFactory(ContainerType, ScreenManager.IScreenFactory)}
+     *  的一个快捷方式使用。
      * @see net.minecraft.client.gui.screen.Screen
      * @see net.minecraft.client.gui.IHasContainer
      * @see net.minecraft.client.gui.screen.inventory.ContainerScreen

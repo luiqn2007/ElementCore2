@@ -12,11 +12,13 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.IFluidTank;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.fluids.capability.templates.*;
 import net.minecraftforge.fluids.capability.wrappers.FluidBucketWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -162,13 +164,16 @@ public class FluidUtils {
      * @return 列表
      */
     public static List<FluidStack> toList(LazyOptional<IFluidHandler> handlerOpt) {
-        ArrayList<FluidStack> list = new ArrayList<>();
-        handlerOpt.ifPresent(handler -> {
-            for (int i = 0; i < handler.getTanks(); i++) {
-                list.add(handler.getFluidInTank(i).copy());
-            }
-        });
-        return list;
+        return toList(handlerOpt.orElse(null));
+    }
+
+    /**
+     * 将某流体容器的流体转化为列表
+     * @param handlerStack 流体容器
+     * @return 列表
+     */
+    public static List<FluidStack> toList(ItemStack handlerStack) {
+        return toList(FluidUtil.getFluidHandler(handlerStack).orElse(null));
     }
 
     /**
@@ -198,6 +203,17 @@ public class FluidUtils {
             }
         }
         return false;
+    }
+
+    /**
+     * 判断一个容器是否具有某种流体
+     * @param handler 容器
+     * @param fluid 待检查流体
+     * @return 是否具有流体
+     */
+    public static boolean hasFluid(ItemStack handler, Fluid fluid) {
+        LazyOptional<IFluidHandlerItem> fluidHandler = FluidUtil.getFluidHandler(handler);
+        return fluidHandler.isPresent() && hasFluid(fluidHandler.orElse(null), fluid);
     }
 
     /**

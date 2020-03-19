@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 /**
  * 客户端与服务端通信的信息类
  * 注册到 SimpleChannel
- * 三个方法中 Object 参数为该类实例
+ * 三个方法中 T 为被注解类的类型
  * @author luqin2007
  */
 @SuppressWarnings("unused")
@@ -19,29 +19,27 @@ import java.lang.annotation.Target;
 public @interface ModSimpleNetwork {
 
     /**
-     * 从 PacketBuffer 中读取数据
+     * 将数据写入 PacketBuffer
      * 参数
-     *  Object, PacketBuffer
+     *  T, PacketBuffer
      * 返回值
      *  无
      */
     Method encoder();
 
     /**
-     * 将数据写入 PacketBuffer
+     * 从 PacketBuffer 中读取数据
      * 参数
-     *  Object
-     * 返回值
      *  PacketBuffer
-     * @see net.minecraft.network.PacketBuffer
-     * @see io.netty.buffer.Unpooled#buffer()
+     * 返回值
+     *  T
      */
     Method decoder();
 
     /**
      * 处理数据
      * 参数
-     *  Object, Supplier<NetworkEvent.Context>
+     *  T, Supplier<NetworkEvent.Context>
      * 返回值
      *  无
      */

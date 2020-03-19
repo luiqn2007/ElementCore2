@@ -1,6 +1,6 @@
 package com.elementtimes.elementcore.api;
 
-import com.elementtimes.elementcore.api.loader.CommonLoader;
+import com.elementtimes.elementcore.api.loader.*;
 import net.minecraftforge.fml.ModContainer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -66,9 +66,23 @@ public class ECModContainer {
                 && version().equals(((ECModContainer) obj).version());
     }
 
-    public ECModElements elements() {
+    public synchronized ECModElements elements() {
         if (!elements.isLoaded) {
-            CommonLoader.load(elements);
+            ItemLoader.load(elements);
+            BlockLoader.load(elements);
+            TileEntityLoader.load(elements);
+            FluidLoader.load(elements);
+            EnchantmentLoader.load(elements);
+            PotionLoader.load(elements);
+            EntityLoader.load(elements);
+            CommandLoader.load(elements);
+            CapabilityLoader.load(elements);
+            RecipeLoader.load(elements);
+            NetworkLoader.load(elements);
+            ToolLoader.load(elements);
+            GuiLoader.load(elements);
+            KeyLoader.load(elements);
+            elements.warn("load finished");
             elements.isLoaded = true;
         }
         return elements;

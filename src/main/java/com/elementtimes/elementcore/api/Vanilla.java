@@ -74,8 +74,6 @@ public class Vanilla {
         public static final Material GOURD = Material.GOURD;
         public static final Material DRAGON_EGG = Material.DRAGON_EGG;
         public static final Material CAKE = Material.CAKE;
-
-        public static Material defaultValue() { return Material.ROCK; }
     }
 
     public static class Sounds {
@@ -983,10 +981,6 @@ public class Vanilla {
         public static final Item CAMPFIRE = net.minecraft.item.Items.CAMPFIRE;
     }
     
-    public static class Properties {
-        public static Block.Properties defaultBlock() { return Block.Properties.from(Blocks.STONE); }
-    }
-    
     public static class Features {
         public static final Structure<PillagerOutpostConfig> PILLAGER_OUTPOST = Feature.PILLAGER_OUTPOST;
         public static final Structure<MineshaftConfig> MINESHAFT = Feature.MINESHAFT;
@@ -1081,8 +1075,8 @@ public class Vanilla {
         public static final Feature<FillLayerConfig> FILL_LAYER = Feature.FILL_LAYER;
         public static final BonusChestFeature BONUS_CHEST = Feature.BONUS_CHEST;
 
-        public static IFeatureConfig featureConfig(Block block) {
-            return new OreFeatureConfig(OreFeatureConfig.FillerBlockType.NATURAL_STONE, block.getDefaultState(), 9);
+        public static NoFeatureConfig noConfig(Block block, Feature<NoFeatureConfig> feature) {
+            return NoFeatureConfig.NO_FEATURE_CONFIG;
         }
     }
     
@@ -1125,10 +1119,6 @@ public class Vanilla {
         public static final Placement<NoPlacementConfig> END_ISLAND = Placement.END_ISLAND;
         public static final Placement<NoPlacementConfig> CHORUS_PLANT = Placement.CHORUS_PLANT;
         public static final Placement<NoPlacementConfig> END_GATEWAY = Placement.END_GATEWAY;
-        
-        public static IPlacementConfig placementConfig(Block block, Placement<?> placement) {
-            return new CountRangeConfig(20, 0, 0, 64);
-        }
     }
     
     public static class Biomes {
@@ -1208,9 +1198,5 @@ public class Vanilla {
         public static final Biome MODIFIED_BADLANDS_PLATEAU = net.minecraft.world.biome.Biomes.MODIFIED_BADLANDS_PLATEAU;
         public static final Biome BAMBOO_JUNGLE = net.minecraft.world.biome.Biomes.BAMBOO_JUNGLE;
         public static final Biome BAMBOO_JUNGLE_HILLS = net.minecraft.world.biome.Biomes.BAMBOO_JUNGLE_HILLS;
-
-        public static Biome plains() {
-            return PLAINS;
-        }
     }
 }

@@ -39,4 +39,12 @@ public class MathUtils {
         }
         return b;
     }
+
+    /**
+     * @see net.minecraft.util.math.MathHelper#epsilonEquals(float, float)
+     * 但这个方法是 ClientOnly 的
+     */
+    public static boolean equal(float f0, float f1) {
+        return Math.abs(f0 - f1) <= 1e-5f;
+    }
 }

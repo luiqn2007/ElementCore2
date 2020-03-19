@@ -45,7 +45,8 @@ public @interface ModBurnTime {
      * 参数
      *  FurnaceFuelBurnTimeEvent
      * 返回值
-     *  无
+     *  int
+     * f返回值小于 0 表示使用默认值
      */
     Method method() default @Method;
 }

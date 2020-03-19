@@ -1,19 +1,15 @@
 package com.elementtimes.elementcore.api.annotation.part;
 
-import com.elementtimes.elementcore.api.ECModElements;
-import com.elementtimes.elementcore.api.Vanilla;
 import com.elementtimes.elementcore.api.annotation.enums.ValueType;
 import net.minecraft.world.gen.GenerationStage;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.function.Supplier;
 
 /**
  * 代表一个方块材质
  * @see net.minecraft.world.gen.feature.ConfiguredFeature
- * @see Parts#feature(Object, Object, ECModElements, Supplier)
  * @see net.minecraft.world.biome.Biome#createDecoratedFeature(net.minecraft.world.gen.feature.Feature,
  *                                                             net.minecraft.world.gen.feature.IFeatureConfig,
  *                                                             net.minecraft.world.gen.placement.Placement,
@@ -31,15 +27,15 @@ public @interface Feature {
     ValueType type() default ValueType.VALUE;
 
     /**
-     * 返回 {@link net.minecraft.world.gen.feature.ConfiguredFeature} 对象或其数组对象
+     * 返回 {@link net.minecraft.world.gen.feature.ConfiguredFeature} 对象
      */
     Getter object() default @Getter;
 
     /**
      * 参数
-     *  Object（根据被注解的内容，可能为 {@link net.minecraft.block.Block}, 也可能为 Class）
+     *  {@link net.minecraft.block.Block}
      * 返回值
-     *  {@link net.minecraft.world.gen.feature.ConfiguredFeature} 对象或其数组对象
+     *  {@link net.minecraft.world.gen.feature.ConfiguredFeature} 对象
      */
     Method method() default @Method;
 

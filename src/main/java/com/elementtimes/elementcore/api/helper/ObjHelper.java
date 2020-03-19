@@ -1,10 +1,10 @@
 package com.elementtimes.elementcore.api.helper;
 
 import com.elementtimes.elementcore.api.ECModElements;
-import com.elementtimes.elementcore.api.annotation.result.ObjFindResult;
 import com.elementtimes.elementcore.api.utils.CommonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
+import net.minecraftforge.fml.loading.moddiscovery.ModAnnotation;
 import net.minecraftforge.forgespi.language.ModFileScanData;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.objectweb.asm.Type;
@@ -13,8 +13,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -26,19 +24,8 @@ import java.util.stream.Stream;
 @SuppressWarnings("WeakerAccess")
 public class ObjHelper {
 
-    private static List<ObjFindResult> cachedResults = new ArrayList<>();
-
-    public static Optional<Object> find(@Nonnull ECModElements elements, ModFileScanData.AnnotationData data, @Nullable FindOptions option) {
-        for (ObjFindResult result : cachedResults) {
-            if (result.match(data)) {
-                return result.getResult();
-            }
-        }
-        Optional<Object> o = (option == null ? FindOptions.DEFAULT : option).get(elements, data);
-        if (o.isPresent()) {
-            cachedResults.add(new ObjFindResult(data, o));
-        }
-        return o;
+    public static <T> Optional<T> find(@Nonnull ECModElements elements, ModFileScanData.AnnotationData data, @Nonnull FindOptions<T> option) {
+        return option.get(elements, data);
     }
 
     public static <T> Optional<Class<? extends T>> findClass(@Nonnull ECModElements elements, @Nonnull String className) {
@@ -99,10 +86,10 @@ public class ObjHelper {
     }
 
     public static <E extends Enum<E>> E getEnum(Class<E> type, Object value, E defValue) {
-        if (value == null) {
-            return defValue;
+        if (value instanceof ModAnnotation.EnumHolder) {
+            return Enum.valueOf(type, ((ModAnnotation.EnumHolder) value).getValue());
         }
-        return Enum.valueOf(type, (String) value);
+        return defValue;
     }
 
     @Nullable
@@ -123,6 +110,8 @@ public class ObjHelper {
 
     public static void setRegisterName(ForgeRegistryEntry<?> entry, String name, String defName, ECModElements elements) {
         String register = StringUtils.isNullOrEmpty(name) ? defName : name;
+        register = register.replace("$", ".");
+        register = register.substring(register.lastIndexOf(".") + 1);
         if (entry.getRegistryName() == null) {
             if (register.contains(":")) {
                 entry.setRegistryName(new ResourceLocation(register.toLowerCase()));
@@ -140,6 +129,18 @@ public class ObjHelper {
         ResourceLocation registryName = from.getRegistryName();
         if (to.getRegistryName() == null && registryName != null) {
             to.setRegistryName(registryName);
+        }
+    }
+
+    public static <T, C> void saveResult(FindOptions<T> result, Map<Class<? extends C>, T> map) {
+        if (result.isFound && result.createType != ElementType.FIELD) {
+            map.put((Class<? extends C>) result.aClass, result.result);
+        }
+    }
+
+    public static <T, C> void saveResult(FindOptions<?> key, T value, Map<Class<? extends C>, T> map) {
+        if (key.hasClass && value != null) {
+            map.put((Class<? extends C>) key.aClass, value);
         }
     }
 }

@@ -1,7 +1,5 @@
 package com.elementtimes.elementcore.api.annotation;
 
-import com.elementtimes.elementcore.api.annotation.part.EffectInstance;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -10,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * 药水
  * 注解到一个药水类的对象或类上
- * 若应用到药水类上，该类应当有一个接受 String, EffectInstance[] 类型的构造函数
+ * 若应用到药水类上，该类应当有一个无参构造
  * @author luqin2007
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -24,9 +22,15 @@ public @interface ModPotion {
     String value() default "";
 
     /**
-     * baseName
+     * 好像 Effect 也是需要注册的。。。
      */
-    String name() default "";
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.FIELD, ElementType.TYPE})
+    @interface Effect {
 
-    EffectInstance[] effects() default {};
+        /**
+         * RegistryName
+         */
+        String value() default "";
+    }
 }

@@ -26,20 +26,6 @@ public class EnergyHandler extends EnergyStorage implements INBTSerializable<NBT
         this.transfer = transfer;
     }
 
-    private int getEnergy() {
-        if (capacity < 0) {
-            return Integer.MAX_VALUE;
-        }
-        return energy;
-    }
-
-    private int getCapacity() {
-        if (capacity < 0) {
-            return Integer.MAX_VALUE;
-        }
-        return capacity;
-    }
-
     private int getMaxReceive() {
         if (capacity < 0) {
             return 0;
@@ -52,6 +38,13 @@ public class EnergyHandler extends EnergyStorage implements INBTSerializable<NBT
             return Integer.MAX_VALUE;
         }
         return maxExtract;
+    }
+
+    public void setCapacity(int capacity) {
+        this.capacity = capacity;
+        if (capacity < getMaxEnergyStored()) {
+            this.energy = Math.min(capacity, this.energy);
+        }
     }
 
     @Override

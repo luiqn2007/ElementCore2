@@ -28,7 +28,6 @@ public class ElementCore {
         INSTANCE = this;
         CONTAINER = builder()
                 .useSimpleNetwork()
-                .enableDebugMessage()
                 .build();
     }
 }

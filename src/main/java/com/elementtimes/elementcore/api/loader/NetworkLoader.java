@@ -38,7 +38,7 @@ public class NetworkLoader {
                     elements.warn("[{}]Can't find encoder method {}", elements.container.id(), encoder.getRefName());
                     return;
                 }
-                AnnotationMethod decoder = Parts.method(elements, map.get("decoder"), new Class[]{null});
+                AnnotationMethod decoder = Parts.method(elements, map.get("decoder"), PacketBuffer.class);
                 if (!encoder.hasContent()) {
                     elements.warn("[{}]Can't find decoder method {}", elements.container.id(), decoder.getRefName());
                     return;
@@ -50,7 +50,7 @@ public class NetworkLoader {
                 }
                 elements.netSimples.add(new NetSimpleWrapper(aClass,
                         (a, b) -> encoder.invoke(a, b),
-                        b -> decoder.get(b).orElseThrow(() -> new RuntimeException(String.format("[{}]Can't create MSG from %s", elements.container.id(), decoder.getRefName()))),
+                        b -> decoder.get(b).orElseThrow(() -> new RuntimeException(String.format("[%s]Can't create MSG from %s", elements.container.id(), decoder.getRefName()))),
                         (a, b) -> handler.invoke(a, b)));
             });
         });

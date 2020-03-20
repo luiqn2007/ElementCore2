@@ -303,7 +303,7 @@ public class ECModElements extends AbstractLogger {
     }
 
     public boolean sendTo(Object message, ServerPlayerEntity player) {
-        return sendTo(message, player.connection.netManager, NetworkDirection.PLAY_TO_SERVER);
+        return sendTo(message, player.connection.netManager, NetworkDirection.PLAY_TO_CLIENT);
     }
 
     public boolean postTo(PacketBuffer message, NetworkManager net, NetworkDirection direction) {
@@ -337,7 +337,7 @@ public class ECModElements extends AbstractLogger {
     }
 
     public boolean postTo(PacketBuffer message, ServerPlayerEntity player) {
-        return postTo(message, player.connection.netManager, NetworkDirection.PLAY_TO_SERVER);
+        return postTo(message, player.connection.netManager, NetworkDirection.PLAY_TO_CLIENT);
     }
 
     // ================================================== Logger =====================================================//

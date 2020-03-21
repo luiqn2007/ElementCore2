@@ -97,7 +97,7 @@ public class IngredientPart<T> {
         return this;
     }
 
-    public IngredientPart<T> withString(Supplier<List<String>> strings) {
+    public IngredientPart<T> withStrings(Supplier<List<String>> strings) {
         tooltipsSupplier = strings;
         return this;
     }

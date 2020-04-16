@@ -7,13 +7,12 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * 用于替换操作
+ * 用于世界替换，如挖掘，抽水等
  * @author luqin2007
  */
 public abstract class WorldReplaceLifecycle<ELEMENT, REPLACE> implements IMachineLifecycle {
 
     protected List<Wrapper> mElements = new ArrayList<>();
-    protected int mInterval = 0;
     protected List<ELEMENT> mElementFind = new ArrayList<>();
 
     /**
@@ -24,33 +23,29 @@ public abstract class WorldReplaceLifecycle<ELEMENT, REPLACE> implements IMachin
     public abstract void findElements(List<ELEMENT> elements);
 
     /**
-     * 获取两次寻找之间的冷却时间
-     * @return 寻找冷却
+     * 判断是否会查找可用元素
+     * @return 是否查找
      */
-    public abstract int getFindInterval();
+    public abstract boolean canFind();
 
     /**
-     * 将原本可替代的元素转换为新的元素
+     * 将原本可替代的元素转换为新的元素。该方法会在寻找到要替代的元素时调用一次
      * @param from 原元素
      * @return 新元素
      */
     public abstract REPLACE convert(ELEMENT from);
 
     /**
-     * 生成新元素
-     * @param element 原元素及其移除时间
-     * @param to 新元素
-     */
-    public abstract void placeNewElement(Wrapper element, REPLACE to);
-
-    /**
-     * 从世界中移除旧元素
+     * 从世界中移除旧元素。一般在该方法中移除旧元素，放置新元素
+     * {@link Wrapper#isRemoved} 属性是一个元素完全破坏的标志。该方法会在 {@link Wrapper#isRemoved} 为 true 前不断调用，且 {@link Wrapper#tickRemove} 自增
      * @param element 原元素及其移除时间
      */
     public abstract void removeOldElement(Wrapper element);
 
     /**
-     * 收集新元素
+     * 收集新元素。
+     * 该方法会与 removeOldElement 同时开始调用，模拟边破坏边收取的操作
+     * {@link Wrapper#isCollected} 为一个元素收集完成的标志，{@link Wrapper#isCollected} 为 true 时停止调用
      * @param element 原元素及其移除时间
      */
     public abstract void collectElement(Wrapper element);
@@ -58,43 +53,44 @@ public abstract class WorldReplaceLifecycle<ELEMENT, REPLACE> implements IMachin
     /**
      * 存储必要的数据
      * 注意：该方法会在每 tick 结束时主动调用，但恢复数据需要手动调用 loadSavedData 方法
-     * @param interval 搜索间隔
      * @param elements 移除中的元素
      */
-    public abstract void save(int interval, List<Wrapper> elements);
+    public abstract void save(List<Wrapper> elements);
 
     /**
      * 恢复数据，该方法需要手动调用
-     * @param interval 搜索间隔
      * @param elements 移除中的元素
      */
-    public void loadSavedData(int interval, List<Wrapper> elements) {
-        mInterval = interval;
+    public void loadSavedData(List<Wrapper> elements) {
         mElements.clear();
         mElements.addAll(elements);
         mElementFind.clear();
     }
 
     @Override
-    public boolean onLoop() {
-        // find
-        mInterval++;
-        if (mInterval >= getFindInterval()) {
+    public void onStart() {
+        if (canFind()) {
             findElements(mElementFind);
-            mInterval = 0;
             mElementFind.forEach(element -> mElements.add(new Wrapper(element)));
             mElementFind.clear();
         }
+    }
+
+    @Override
+    public boolean onLoop() {
         // replace
         Iterator<Wrapper> iterator = mElements.iterator();
         while (iterator.hasNext()) {
             Wrapper element = iterator.next();
-            element.tick++;
-            removeOldElement(element);
-            collectElement(element);
-            if (element.isRemoved) {
-                REPLACE convert = convert(element.element);
-                placeNewElement(element, convert);
+            if (!element.isRemoved) {
+                removeOldElement(element);
+                element.tickRemove++;
+            }
+            if (!element.isCollected) {
+                collectElement(element);
+                element.tickCollect++;
+            }
+            if (element.isRemoved && element.isCollected) {
                 iterator.remove();
             }
         }
@@ -103,21 +99,69 @@ public abstract class WorldReplaceLifecycle<ELEMENT, REPLACE> implements IMachin
 
     @Override
     public boolean onCheckFinish() {
-        return mElementFind.isEmpty();
+        return mElements.isEmpty();
     }
 
     @Override
     public void onTickFinish() {
-        save(mInterval, mElements);
+        save(mElements);
     }
 
     public class Wrapper {
         ELEMENT element;
-        int tick = 0;
-        boolean isRemoved = false;
+        REPLACE collect;
+        int tickRemove;
+        int tickCollect;
+        boolean isRemoved;
+        boolean isCollected;
+
+        public ELEMENT getElement() {
+            return element;
+        }
+
+        public void setElement(ELEMENT element) {
+            this.element = element;
+        }
+
+        public REPLACE getCollect() {
+            return collect;
+        }
+
+        public int getRemoveTick() {
+            return tickRemove;
+        }
+
+        public int getCollectTick() {
+            return tickCollect;
+        }
+
+        public boolean isRemoved() {
+            return isRemoved;
+        }
+
+        public void setRemoved(boolean removed) {
+            isRemoved = removed;
+        }
+
+        public boolean isCollected() {
+            return isCollected;
+        }
+
+        public void setCollected(boolean collected) {
+            isCollected = collected;
+        }
 
         Wrapper(ELEMENT element) {
+            this(element, convert(element), 0, 0, false, false);
+        }
+
+        public Wrapper(ELEMENT element, REPLACE collect, int tickRemove, int tickCollect, boolean isRemoved, boolean isCollected) {
             this.element = element;
+            this.collect = collect;
+            this.tickRemove = tickRemove;
+            this.tickCollect = tickCollect;
+            this.isRemoved = isRemoved;
+            this.isCollected = isCollected;
         }
     }
 }

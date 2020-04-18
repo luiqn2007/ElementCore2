@@ -63,7 +63,7 @@ public class ItemSlot extends BaseContent {
     @SideOnly(Side.CLIENT)
     public int draw(int x, int y, int spaceX, int spaceY, int mouseX, int mouseY) {
         getContainer().addSlotToContainer(mSlot);
-        return y;
+        return y + 18;
     }
 
     @Override

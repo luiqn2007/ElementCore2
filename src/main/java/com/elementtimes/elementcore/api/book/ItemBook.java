@@ -1,7 +1,6 @@
 package com.elementtimes.elementcore.api.book;
 
 import com.elementtimes.elementcore.ElementCore;
-import com.elementtimes.elementcore.api.book.screen.BookGuiContainer;
 import com.elementtimes.elementcore.api.common.net.GuiHandler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -71,7 +70,7 @@ public class ItemBook extends Item implements IGuiHandler {
     public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
         BookContainer container = (BookContainer) getServerGuiElement(ID, player, world, x, y, z);
         if (player.world.isRemote) {
-            return new BookGuiContainer(container);
+            return new com.elementtimes.elementcore.api.book.screen.BookGuiContainer(container);
         }
         return container;
     }

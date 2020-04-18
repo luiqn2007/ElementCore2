@@ -4,7 +4,7 @@ import com.elementtimes.elementcore.api.book.screen.DrawStage;
 import com.elementtimes.elementcore.api.book.screen.IContent;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
-import org.lwjgl.input.Mouse;
+import net.minecraft.inventory.Slot;
 
 import javax.annotation.Nonnull;
 import java.util.Iterator;
@@ -96,6 +96,11 @@ public class BookContainer extends Container {
 
     public void jumpTo(int page) {
         mPage = Math.min(Math.max(0, page), getTotalPage() - 1);
+    }
+
+    @Override
+    public Slot addSlotToContainer(Slot slotIn) {
+        return super.addSlotToContainer(slotIn);
     }
 
     @Override

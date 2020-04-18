@@ -19,7 +19,6 @@ import javax.annotation.Nonnull;
  */
 public class ItemSlot extends BaseContent {
 
-    private int mSlotId = 0;
     protected Slot mSlot;
 
     public ItemSlot(Slot slot) {
@@ -63,20 +62,17 @@ public class ItemSlot extends BaseContent {
     @Override
     @SideOnly(Side.CLIENT)
     public int draw(int x, int y, int spaceX, int spaceY, int mouseX, int mouseY) {
+        getContainer().addSlotToContainer(mSlot);
         return y;
     }
 
     @Override
     public DrawStage getStage() {
-        return DrawStage.CONSTRUCTOR;
+        return DrawStage.CONTAINER;
     }
 
     @Override
     public boolean isTemp() {
         return false;
-    }
-
-    public int getSlotId() {
-        return mSlotId;
     }
 }

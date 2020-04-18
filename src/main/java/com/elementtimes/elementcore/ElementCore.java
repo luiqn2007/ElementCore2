@@ -23,11 +23,8 @@ public class ElementCore {
         return ECModElements.builder();
     }
 
-
     public ElementCore() {
         INSTANCE = this;
-        CONTAINER = builder()
-                .useSimpleNetwork()
-                .build();
+        CONTAINER = builder().useSimpleNetwork().build();
     }
 }

@@ -82,6 +82,7 @@ public class ECModContainer {
             ToolLoader.load(elements);
             GuiLoader.load(elements);
             KeyLoader.load(elements);
+            BookLoader.load(elements);
             elements.warn("load finished");
             elements.isLoaded = true;
         }

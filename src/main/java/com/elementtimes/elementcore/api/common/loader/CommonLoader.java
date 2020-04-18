@@ -35,6 +35,7 @@ public class CommonLoader {
         NetworkLoader.load(elements);
         CommandLoader.load(elements);
         GuiLoader.load(elements);
+        BookLoader.load(elements);
         loadStaticFunction(elements);
         loadBurnTime(elements);
         loadOreName(elements);

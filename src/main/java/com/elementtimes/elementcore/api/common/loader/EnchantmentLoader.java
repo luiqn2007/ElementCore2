@@ -51,7 +51,7 @@ public class EnchantmentLoader {
                 } else {
                     book = EnchantmentBook.valueOf(bookHolder.getValue());
                 }
-                elements.warn("[ModEnchantment.Book]load {} book, level {}", enchantment.getName(), book);
+                elements.warn("[ModEnchantment.ModBook]load {} book, level {}", enchantment.getName(), book);
                 elements.enchantmentBooks.add(new EnchantmentBookWrapper(elements, tab, book, enchantment));
             });
         });

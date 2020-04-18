@@ -16,7 +16,6 @@ public class CommonProxy {
         ElementCore.instance().container = ECModElements.builder()
                 .disableDebugMessage()
                 .noEventNetwork()
-                .enableDebugMessage()
                 .build(event);
     }
 

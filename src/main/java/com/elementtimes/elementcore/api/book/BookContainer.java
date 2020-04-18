@@ -24,8 +24,6 @@ public class BookContainer extends Container {
             mBook.getPages().add(new Page(mBook));
         }
         // draw
-        int mouseX = Mouse.getX();
-        int mouseY = Mouse.getY();
         Page page = getPage();
         List<IContent> contents = page.getContents(DrawStage.CONTAINER);
         Iterator<IContent> iterator = contents.iterator();
@@ -37,7 +35,7 @@ public class BookContainer extends Container {
             content.setContainer(this);
             if (draw) {
                 // draw
-                int newY = content.draw(0, yLast, xLength, yLength, mouseX, mouseY);
+                int newY = content.draw(0, yLast, xLength, yLength, 0, 0);
                 int height = newY - yLast;
                 ySpace -= height;
                 yLast = newY;

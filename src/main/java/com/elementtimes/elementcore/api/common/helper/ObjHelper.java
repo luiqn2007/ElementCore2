@@ -11,8 +11,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -89,12 +87,7 @@ public class ObjHelper {
             return all.stream();
         }
         String modid = elements.container.id();
-        List<ASMDataTable.ASMData> collect = all.stream().filter(data -> data.getCandidate().getContainedMods().stream().anyMatch(mod -> modid.equals(mod.getModId()))).collect(Collectors.toList());
-        System.out.println(modid + ": " + annotation.getSimpleName() + " * " + collect.size());
-        for (ASMDataTable.ASMData data : collect) {
-            System.out.println("\t" + data.getClassName() + "#" + data.getObjectName());
-        }
-        return collect.stream();
+        return all.stream().filter(data -> data.getCandidate().getContainedMods().stream().anyMatch(mod -> modid.equals(mod.getModId())));
     }
 
     public static <T> T getDefault(ASMDataTable.ASMData data) {

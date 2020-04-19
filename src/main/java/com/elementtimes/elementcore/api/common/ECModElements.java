@@ -170,10 +170,10 @@ public class ECModElements extends AbstractLogger {
 
     ECModElements(FMLPreInitializationEvent event, boolean debugEnable, boolean netSimple, boolean netEvent,
                   Table<LoadState, Class<? extends Annotation>, BiConsumer<ASMDataTable.ASMData, ECModContainer>> customAnnotation,
-                  Set<String> packages, ModContainer modContainer, Logger logger) {
+                  Set<String> packages, ModContainer modContainer, boolean otherMod, Logger logger) {
         this.customAnnotation = customAnnotation;
         this.packages = packages;
-        this.container = new ECModContainer(modContainer, this, debugEnable, logger);
+        this.container = new ECModContainer(modContainer, this, debugEnable, otherMod, logger);
         this.asm = event.getAsmData();
         this.fmlEventRegister = new FmlRegister(container);
         this.clientElement = ECUtils.common.isClient() ? new com.elementtimes.elementcore.api.client.ECModElementsClient(this) : null;
@@ -193,6 +193,7 @@ public class ECModElements extends AbstractLogger {
         private Table<LoadState, Class<? extends Annotation>, BiConsumer<ASMDataTable.ASMData, ECModContainer>> customAnnotation = HashBasedTable.create();
         private Set<String> packages = new LinkedHashSet<>();
         private boolean debugEnable = false, netSimple = true, netEvent = false;
+        private boolean otherMod = false;
         private Logger logger = null;
 
         public Builder enableDebugMessage() {
@@ -231,12 +232,17 @@ public class ECModElements extends AbstractLogger {
             netEvent = false;
             return this;
         }
+        public Builder usePackage() {
+            otherMod = true;
+            return this;
+        }
 
         public ECModContainer build(FMLPreInitializationEvent event) {
             // newInstance
             ModContainer container = Loader.instance().getIndexedModList().get(event.getModMetadata().modId);
+            // packages.add("");
             packages.add(container.getMod().getClass().getPackage().getName());
-            ECModElements elements = new ECModElements(event, debugEnable, netSimple, netEvent, customAnnotation, packages, container, logger);
+            ECModElements elements = new ECModElements(event, debugEnable, netSimple, netEvent, customAnnotation, packages, container, otherMod, logger);
             ECModContainer.MODS.put(container.getModId(), elements.container);
             // event
             MinecraftForge.ORE_GEN_BUS.register(new OreBusRegister(elements.container));
